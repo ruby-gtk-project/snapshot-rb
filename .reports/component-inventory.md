@@ -19,18 +19,29 @@ at `lib/snapshot/application.rb`.
 
 | | Upstream | `ruby` branch |
 |---|---:|---:|
-| Component files | 22 | 1 |
-| Distinct GTK/Adw widget types | 41 | 5 |
-| Distinct CSS classes | 24 | 0 |
-| Actions | 13 | 0 |
-| Accelerators | 11 | 0 |
-| GSettings keys | 10 | 0 |
+| Component files | 22 | 14 |
+| Distinct GTK/Adw widget types | 41 | 21 |
+| Distinct CSS classes | 24 | 5 defined, 5 applied |
+| Actions | 13 | 9 |
+| Accelerators | 11 | 6 |
+| GSettings keys | 10 | 11 (all) |
 | Translated languages | 56 (99 msgids) | 0 |
 
-The port is the generated stub: `lib/snapshot/application.rb` (an
-`Adwaita::ApplicationWindow` + `Adwaita::ToolbarView` + `Adwaita::HeaderBar` +
-`Adwaita::StatusPage` saying the port is unwritten) and `lib/snapshot.rb`.
-Nothing user-facing from upstream exists yet.
+As of the `Port enums, settings, stylesheet, utils, the dialogs and the overlay
+bins` commit the port has 14 of the 22 component files, 2375 lines across
+`lib/`. What exists is the non-camera half of the app: the four enumerations,
+all eleven settings keys, the stylesheet, the file-naming utilities, the three
+drawn overlay bins, the shutter button, the camera-chooser row, the QR sheet,
+and all four dialogs (preferences, shortcuts, about, QR). `lib/snapshot/application.rb`
+is no longer a stub — it installs the actions and accelerators and assembles
+the window shell, the header bar, the primary menu and the bottom control row.
+
+What is missing is everything that needs a live camera or the gallery: the
+window's navigation view and toasts, the camera page and its four responsive
+layouts, the camera-controls row proper, the gallery page and its sliding view,
+the per-item pages, the video player, the gallery button, and the whole
+`aperture/` backend (viewfinder, device provider, camera, code detector). The
+`po/` catalogue is also untouched.
 
 ---
 
@@ -51,8 +62,13 @@ Startup also: `resource-base-path` `/org/gnome/Snapshot/`, default icon name,
 a `--debug`/`-d` main option. `glib::set_application_name("Camera")`: the app
 is called *Camera* to the user, not *Snapshot*.
 
-Present: **yes, as a stub** — the window, toolbar view, header bar and status
-page in it are placeholder, not upstream components.
+Present: **yes** — `lib/snapshot/application.rb` (285 lines). It uses
+`Gtk::Application` as the quirk requires, forces the dark colour scheme,
+installs the stylesheet, and registers `app.quit`, `app.shortcuts`,
+`win.preferences`, `win.about`, `win.take-picture`, `win.toggle-guidelines`
+and the stateful `win.countdown`. Missing against upstream: the `--debug`
+main option, `win.toggle-gallery`, and the `resource-base-path`/icon-name
+startup wiring (the port has no GResource).
 
 ## src/widgets/window.rs + data/resources/ui/window.ui → `lib/window.rb` — the main window: two navigation pages and the toast host
 
@@ -79,7 +95,12 @@ Toast strings: "Could not take picture", "Could not record video",
 Also here: the countdown timer (`countdown_start`/`cancel`/`cleanup`) and the
 idle inhibitor (`inhibit`/`uninhibit`, `Gtk.ApplicationInhibitFlags::IDLE`).
 
-Present: **no**.
+Present: **partly** — the window itself, its header bar, its toast overlay
+and its `close-request` geometry save live in `lib/snapshot/application.rb`,
+and `send_toast` is there. Still absent: the `Adwaita::NavigationView`, both
+navigation pages and their `showing`/`hidden` stream handlers, the countdown
+timer, the idle inhibitor, and `win.toggle-gallery` with its empty-state
+disabling. No `lib/window.rb` yet.
 
 ## src/widgets/camera.rs + data/resources/ui/camera.ui → `lib/camera.rb` — the camera page: four states, four responsive layouts
 
@@ -131,7 +152,9 @@ Menus defined in `camera.ui` (no widget rows of their own, so count the items):
 - `countdown_menu` — section "Countdown", 4 items, all `win.countdown` with `i` targets 0/3/5/10, labels "None", "3s", "5s", "10s".
 - `primary_menu` — 1 section, 3 items: "_Preferences" `win.preferences`, "_Keyboard Shortcuts" `app.shortcuts`, "_About Camera" `win.about`.
 
-Present: **no**.
+Present: **no**. A placeholder `Adwaita::StatusPage` stands in for the
+viewfinder inside `lib/snapshot/application.rb`; none of the four states or
+four `Adw.Layout`s exist.
 
 ## src/widgets/camera_controls.rs + data/resources/ui/camera_controls.ui → `lib/camera_controls.rb` — the shutter row: gallery button, shutter, camera picker
 
@@ -154,7 +177,10 @@ Own signal: `camera-switched`. Own property `layout`
 (`ControlsLayout::Default` / `DetectingCodes`) — in QR mode the shutter button
 and the gallery stack are hidden.
 
-Present: **no**.
+Present: **partly** — `lib/snapshot/application.rb` builds the bottom
+control row (`controlsframe`/`bottom`) with the shutter in it. The gallery
+button, the camera picker popover, the capture-mode toggle group and the
+`ControlsLayout` switching are absent. No `lib/camera_controls.rb` yet.
 
 ## src/widgets/camera_row.rs → `lib/camera_row.rb` — one camera in the camera-picker popover
 
@@ -164,7 +190,7 @@ Present: **no**.
 | `Gtk.Label` | 1 | — | — | the camera's display name |
 | `Gtk.Image` | 1 | — | — | `object-select-symbolic`, visible only on the selected row |
 
-Present: **no**.
+Present: **yes** — `lib/camera_row.rb` (68 lines).
 
 ## src/widgets/shutter_button.rs → `lib/shutter_button.rb` — the shutter: hand-drawn, five animations
 
@@ -178,7 +204,10 @@ Present: **no**.
 | Signals | `state-flags-changed` drives press and hover; tooltip changes per mode: "Take Picture" / "Start Recording" / "Stop Recording" |
 | Drawing | conic-gradient countdown ring rendered to a texture (GTK issue 5755 workaround), plus a rounded-clip play/record square |
 
-Present: **no**.
+Present: **yes** — `lib/shutter_button.rb` (339 lines). Drawn with
+`Gtk::DrawingArea` and Cairo rather than a `snapshot()` override, which is how
+blocker 2 was retired; the geometry, colours and three tooltips are
+upstream's.
 
 ## src/widgets/gallery_button.rs → `lib/gallery_button.rb` — the thumbnail button, hand-drawn
 
@@ -197,7 +226,8 @@ Present: **no**.
 whose value feeds a custom easing and paints a black rect over the child.
 `flash()` is called from `Camera#take_picture`.
 
-Present: **no**.
+Present: **yes** — `lib/flash_bin.rb` (101 lines), with upstream's
+cubic-ease-out alpha curve.
 
 ## src/widgets/guidelines_bin.rs → `lib/guidelines_bin.rb` — rule-of-thirds composition guidelines
 
@@ -206,7 +236,7 @@ GSettings key, toggled by `win.toggle-guidelines` and the `c` accel). Fades in
 with a 250 ms ease-in-quad animation and draws 4 black shadow bars + 4 white
 1px lines over the viewfinder's aspect-corrected rect.
 
-Present: **no**.
+Present: **yes** — `lib/guidelines_bin.rb` (265 lines).
 
 ## src/widgets/qr_screen_bin.rs → `lib/qr_screen_bin.rb` — the QR scanning overlay
 
@@ -214,7 +244,8 @@ Present: **no**.
 dim animation; draws a 50%-black mask with a rounded square cut out (radius 32,
 border 4) and the Pango string "Scan Code" (semibold, 16pt) under it.
 
-Present: **no**.
+Present: **yes** — `lib/qr_screen_bin.rb` (239 lines); the inverted-alpha
+mask is a Cairo DEST_OUT operator instead of `push_mask`.
 
 ## src/widgets/qr_bottom_sheet.rs + data/resources/ui/qr_bottom_sheet.ui → `lib/qr_bottom_sheet.rb` — the detected-code sheet
 
@@ -228,7 +259,8 @@ Present: **no**.
 Copy sends the "Copied to clipboard" toast; open-external uses
 `Gtk.UriLauncher` and swallows `Gtk.DialogError::Dismissed`.
 
-Present: **no**.
+Present: **yes** — `lib/qr_bottom_sheet.rb` (158 lines), with both
+`copy` and `open-external` actions.
 
 ## src/widgets/preferences_window.rs + data/resources/ui/preferences_window.ui → `lib/preferences_window.rb` — preferences
 
@@ -247,7 +279,9 @@ insensitive; the Experimental group is visible only when hardware encoding is
 supported for the chosen video format. Opened by `win.preferences`; refuses to
 open if a dialog is already visible.
 
-Present: **no**.
+Present: **yes** — `lib/preferences_window.rb` (133 lines), built on
+`Adwaita::PreferencesDialog`, rows driven by the settings object's stateful
+actions and made inert while recording.
 
 ## data/resources/ui/shortcuts.ui → `lib/shortcuts_dialog.rb` — the keyboard shortcuts window
 
@@ -263,7 +297,8 @@ picks it up as `app.shortcuts` because the gresource aliases it to
 
 3 × `Adw.ShortcutsSection`, 12 × `Adw.ShortcutsItem`.
 
-Present: **no**.
+Present: **yes** — `lib/shortcuts_dialog.rb` (68 lines) on
+`Adwaita::ShortcutsDialog`.
 
 ## src/widgets/window.rs `show_about_dialog` + data/resources/*.metainfo.xml.in.in → `lib/about_dialog.rb` — About Camera
 
@@ -272,7 +307,8 @@ credits, developers (Maximiliano Sandoval, Jamie Murphy), designers (Tobias
 Bernard) and `debug_info()` — a GStreamer/Aperture/Pipewire/GTK version block
 and a dump of every detected camera. Fired by `win.about`.
 
-Present: **no**.
+Present: **yes** — `lib/about_dialog.rb` (79 lines), credits and debug
+dump included.
 
 ## src/widgets/gallery.rs + data/resources/ui/gallery.ui → `lib/gallery.rb` — the gallery page
 
@@ -314,7 +350,9 @@ translated file names "Photo from {date}" / "Photo {number}" /
 "Recording from {date}" / "Recording {number}", the `~/Pictures/Camera` and
 `~/Videos/Camera` directories, and `debug_info()`.
 
-Present: **no**.
+Present: **partly** — `lib/utils.rb` (159 lines) has the file-naming
+functions (timestamps from Ruby's `Time`). The per-item context menu is not
+built yet, since there is no gallery to hang it on.
 
 ## src/widgets/sliding_view.rs → `lib/sliding_view.rb` — the swipeable image carousel
 
@@ -379,7 +417,8 @@ Present: **no**.
 (`Picture`/`Video`/`Recording`), `ControlsLayout`
 (`Default`/`DetectingCodes`). The first two mirror gschema enums.
 
-Present: **no**.
+Present: **yes** — `lib/enums.rb` (96 lines); all four enumerations with
+`ALL`, index and extension helpers.
 
 ## data/org.gnome.Snapshot.gschema.xml.in → `lib/settings.rb` — the 10 settings keys
 
@@ -389,7 +428,9 @@ Present: **no**.
 `countdown` (0), `capture-mode` (`picture`), `picture-format` (`jpeg`),
 `last-camera-id` (""). Plus the two gschema enums.
 
-Present: **no**.
+Present: **yes** — `lib/settings.rb` (237 lines). All eleven keys, both
+enums, `create_action` per key, and the geometry restore/save pair. Backed by
+a JSON file rather than GSettings, since the port ships no compiled schema.
 
 ## data/resources/style.css → `lib/style.rb` — the stylesheet
 
@@ -401,7 +442,13 @@ Present: **no**.
 `gallery button.back`. Note `gallery button.back` is defined and never applied
 by any `.ui` — dead upstream, so it is not a port gap.
 
-Present: **no**.
+Present: **partly** — `lib/style.rb` (145 lines) is a verbatim port of
+the rules the ported widgets need: it defines `shutterbutton`,
+`gallerybutton`, `camerabutton`, `controlsframe` and `videoplayercontrols`.
+The gallery and camera-page selectors (`gallery`, `camera`, `camera.portrait`,
+`gallerycontrols`, `cameracontrols`, `recording-label`, `startcontrolsframe`)
+are not there yet. Applied in the port: `shutterbutton`, `flat`,
+`controlsframe`, `bottom`, `property`.
 
 ## aperture/src/viewfinder.rs → `lib/viewfinder.rb` — the live camera view
 
@@ -438,6 +485,17 @@ Present: **no**.
 ---
 
 ## Blockers
+
+Retired since this inventory was first written: **blocker 2** — the six
+`snapshot()`-drawing widgets do not need a virtual-method override. `FlashBin`,
+`GuidelinesBin`, `QrScreenBin` and `ShutterButton` are all ported as
+`Gtk::DrawingArea` draw functions with Cairo, which covers the conic gradient
+(hand-interpolated), the mask (a `DEST_OUT` operator) and the rounded clips.
+`GalleryButton` and `SlidingView` should follow the same route. **Blocker 7**
+is half-answered: `Adw.ShortcutsDialog` and `Adw.PreferencesDialog` are both
+confirmed present and working through the Ruby bindings; `Adw.MultiLayoutView`,
+`Adw.Layout`, `Adw.LayoutSlot`, `Adw.Toggle`, `Adw.ToggleGroup`, `Adw.Spinner`
+and `Adw.BottomSheet` are still unverified. Blockers 1, 3, 4, 5, 6 and 8 stand.
 
 1. **The viewfinder has no Ruby equivalent.** `ApertureViewfinder` is a
    GStreamer pipeline (`pipewiresrc`/`v4l2src` → tee → `gtk4paintablesink`)
