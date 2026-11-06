@@ -16,10 +16,14 @@ require_relative 'settings'
 # a row whose action is missing is insensitive on its own.
 #
 # The Experimental group is shown only where hardware video encoding works.
-# Upstream asks aperture, which asks GStreamer whether an H.264 or VP8 hardware
-# encoder exists. There is no GStreamer binding for Ruby, so this port has no
-# hardware encoder and the group stays hidden; the predicate is a constructor
-# argument so the camera backend can answer it once it can.
+# Upstream asks aperture, which asks GStreamer's registry whether an H.264 or
+# VP8 hardware encoder element exists — a `Gst::ElementFactory.find` lookup.
+# This port does bind GStreamer now (gstreamer_pbutils, gstreamer_play), but
+# neither binds `Gst::ElementFactory`: that lookup belongs to GStreamer core
+# itself, which is the separate `gstreamer` gem, not one of this port's four.
+# So the group still stays hidden rather than guess; the predicate remains a
+# constructor argument so a camera backend that can answer it can be wired in
+# without changing this file again.
 #
 class PreferencesWindow < Adwaita::PreferencesDialog
   CONTENT_WIDTH = 360

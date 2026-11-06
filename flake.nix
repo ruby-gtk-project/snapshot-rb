@@ -25,7 +25,21 @@
           libadwaita
           harfbuzz
           librsvg
+          libglycin
+          libglycin-gtk4
         ]
+        # The GStreamer stack glycin, gstreamer_pbutils and gstreamer_play
+        # bind: gst-plugins-base carries GstPbutils/GstVideo/GstAudio/GstTag,
+        # gst-plugins-bad carries GstPlay/GstBadAudio, and gstreamer itself is
+        # the Gst/GstBase every one of those typelibs declares as a
+        # dependency. gst-plugins-good ships no typelib of its own but is the
+        # decoder/demuxer plugins GstPlay's playbin3 needs to actually open a
+        # file, so it is on the plugin path below rather than the typelib one.
+        ++ (with pkgs.gst_all_1; [
+          gstreamer
+          gst-plugins-base
+          gst-plugins-bad
+        ])
         # The Ruby `pkg-config` gem resolves `Requires.private` transitively and
         # hard-fails if any .pc in the chain is missing, so gtk4's whole private
         # closure has to be on PKG_CONFIG_PATH, not just its public deps.
@@ -95,6 +109,19 @@
         typelibPath = pkgs.lib.makeSearchPath "lib/girepository-1.0"
           (map (drv: drv.out or drv) (gtkStack ++ [ pkgs.at-spi2-core ]));
 
+        # GstPlay::Play.new builds a playbin3 and GstPbutils::Discoverer builds
+        # a uridecodebin; both are fatal (playbin3 even aborts the process) if
+        # the plugin registry can't find them. gst-plugins-good carries no
+        # typelib — it never belongs on typelibPath — but does carry decoders
+        # playbin3 needs, so it is added only here.
+        gstPluginPackages = with pkgs.gst_all_1; [
+          gstreamer
+          gst-plugins-base
+          gst-plugins-good
+          gst-plugins-bad
+        ];
+        gstPluginPath = pkgs.lib.makeSearchPath "lib/gstreamer-1.0" gstPluginPackages;
+
         # nix/ and not the repo root: the root Gemfile is kettle-jem's
         # development bundle — rubocop, rspec, yard, the kettle-dev stack — and
         # must not end up in a packaged app's runtime closure. nix/Gemfile holds
@@ -129,7 +156,7 @@
           # the wrapper never looks. The wrapper below is built by hand and
           # points at both the pre- and post-move paths.
           nativeBuildInputs = [ pkgs.makeWrapper ];
-          buildInputs = [ gems ] ++ gtkStack;
+          buildInputs = [ gems ] ++ gtkStack ++ [ pkgs.gst_all_1.gst-plugins-good pkgs.glycin-loaders ];
 
           dontBuild = true;
 
@@ -160,11 +187,13 @@
               --add-flags "-I$out/share/snapshot/lib" \
               --add-flags "$out/share/snapshot/exe/${launcher}" \
               --set GI_TYPELIB_PATH "${typelibPath}" \
+              --set GST_PLUGIN_SYSTEM_PATH_1_0 "${gstPluginPath}" \
               --prefix XDG_DATA_DIRS : "$out/share" \
               --prefix XDG_DATA_DIRS : "$out/share/gsettings-schemas/snapshot-0.1.0" \
               --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
               --prefix XDG_DATA_DIRS : "${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}" \
-              --prefix XDG_DATA_DIRS : "${pkgs.adwaita-icon-theme}/share"
+              --prefix XDG_DATA_DIRS : "${pkgs.adwaita-icon-theme}/share" \
+              --prefix XDG_DATA_DIRS : "${pkgs.glycin-loaders}/share"
 
             runHook postInstall
           '';
@@ -201,13 +230,18 @@
             pkgs.xvfb-run
             pkgs.gsettings-desktop-schemas
             pkgs.adwaita-icon-theme
+            pkgs.gst_all_1.gst-plugins-good
+            pkgs.glycin-loaders
           ] ++ gtkStack;
 
           # Icons, GSettings schemas and the GTK portal all resolve through
           # XDG_DATA_DIRS; without these the window opens with blank icons.
+          # glycin-loaders' conf.d, which Gly::Loader needs to find a decoder
+          # at all, resolves the same way.
           shellHook = ''
-            export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}:${pkgs.adwaita-icon-theme}/share:$XDG_DATA_DIRS"
+            export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}:${pkgs.adwaita-icon-theme}/share:${pkgs.glycin-loaders}/share:$XDG_DATA_DIRS"
             export GI_TYPELIB_PATH="${typelibPath}''${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
+            export GST_PLUGIN_SYSTEM_PATH_1_0="${gstPluginPath}''${GST_PLUGIN_SYSTEM_PATH_1_0:+:$GST_PLUGIN_SYSTEM_PATH_1_0}"
             export RUBYLIB="$PWD/lib''${RUBYLIB:+:$RUBYLIB}"
             [ -d data/schemas ] && export GSETTINGS_SCHEMA_DIR="$PWD/data/schemas"
             unset BUNDLE_GEMFILE BUNDLE_FROZEN

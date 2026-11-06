@@ -2,6 +2,7 @@
 
 require 'fileutils'
 require 'adwaita'
+require 'gstreamer_pbutils'
 
 require_relative 'enums'
 
@@ -51,9 +52,12 @@ module Utils
 
   # The dump the about dialog's "Troubleshooting" page shows. Upstream lists
   # the versions of aperture, GStreamer, Pipewire and GTK, then every camera
-  # the device provider found. There is no GStreamer binding for Ruby, so the
-  # versions listed are the ones this port actually runs on; the camera
-  # section, like upstream's, is left out entirely when no camera was found.
+  # the device provider found. There is still no Pipewire binding and no
+  # aperture equivalent for Ruby, and so still no camera to list, but
+  # gstreamer_pbutils does bind gst-plugins-base's own version constants, so
+  # the GStreamer line below is the real one rather than an admission that it
+  # is missing; the camera section, like upstream's, is left out entirely
+  # when no camera was found.
   def self.debug_info(cameras: [])
     "Library Details:\n\n#{library_details}".then do |details|
       cameras.empty?.then do |no_cameras|
@@ -71,9 +75,20 @@ module Utils
       "Ruby #{RUBY_VERSION} (#{RUBY_PLATFORM})",
       "Gtk #{Gtk::Version::MAJOR}.#{Gtk::Version::MINOR}.#{Gtk::Version::MICRO}",
       "Adwaita #{Adwaita::MAJOR_VERSION}.#{Adwaita::MINOR_VERSION}.#{Adwaita::MICRO_VERSION}",
+      "GStreamer #{gstreamer_version}",
       "gtk4 gem #{Gem.loaded_specs['gtk4']&.version || 'UNKNOWN'}",
       "adwaita gem #{Gem.loaded_specs['adwaita']&.version || 'UNKNOWN'}",
+      "gstreamer_pbutils gem #{Gem.loaded_specs['gstreamer_pbutils']&.version || 'UNKNOWN'}",
     ].join("\n")
+  end
+
+  # gst-plugins-base's own version, read off the constants
+  # gstreamer_pbutils's typelib loader defines — the same plugins-base
+  # release GstPbutils, GstVideo, GstAudio and GstTag all come from.
+  def self.gstreamer_version
+    "#{GstPbutils::PLUGINS_BASE_VERSION_MAJOR}." \
+      "#{GstPbutils::PLUGINS_BASE_VERSION_MINOR}." \
+      "#{GstPbutils::PLUGINS_BASE_VERSION_MICRO}"
   end
 
   # Upstream prints the camera's display name, its GStreamer device class and

@@ -10,3 +10,8 @@ source "https://rubygems.org"
 
 gem "adwaita"
 gem "gtk4"
+gem "glib2"
+gem "glycin"
+gem "libglycin-gtk4"
+gem "gstreamer_pbutils"
+gem "gstreamer_play"

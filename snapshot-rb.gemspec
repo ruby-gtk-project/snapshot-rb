@@ -96,6 +96,18 @@ Gem::Specification.new do |spec|
   spec.executables = ["snapshot"]
   spec.require_paths = ["lib"]
 
+  # Runtime: the toolkit itself, plus the GI-typelib loaders this port binds
+  # against instead of hand-rolling what they provide (image loading, camera
+  # thumbnail/video playback). See nix/Gemfile for the gems actually resolved
+  # into the packaged app's closure; this list is what `gem install` needs.
+  spec.add_dependency("gtk4", "~> 4.3")
+  spec.add_dependency("adwaita", "~> 4.3")
+  spec.add_dependency("glib2", "~> 4.3")
+  spec.add_dependency("glycin", "~> 1.0")
+  spec.add_dependency("libglycin-gtk4", "~> 1.0")
+  spec.add_dependency("gstreamer_pbutils", "~> 1.1")
+  spec.add_dependency("gstreamer_play", "~> 1.1")
+
   # NOTE: It is preferable to list development dependencies in the gemspec due to increased
   #       visibility and discoverability.
   #       However, development dependencies in gemspec will install on

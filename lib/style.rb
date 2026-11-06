@@ -11,13 +11,20 @@ require 'adwaita'
 # CSS provider at application-startup priority — the same priority the resource
 # path's automatic sheet gets.
 #
-# The element selectors (`camera`, `gallery`, `headerbar`) match the CSS names
-# the widgets set on themselves; the class selectors match the classes the
-# widgets add. Both sides have to agree, so neither this file nor the classes
-# the widgets add should change alone.
+# Upstream matches its Camera and Gallery widgets with the bare element
+# selectors `camera` and `gallery`, which is what `klass.set_css_name(...)`
+# buys a GtkWidget subclass in Rust. Camera and Gallery in this port are
+# plain Ruby objects wrapping a stock Adwaita::BreakpointBin, the same shape
+# every other widget in this port uses, rather than GObject subclasses that
+# could rename their own CSS node — so `camera`/`gallery` below are class
+# selectors (`.camera`/`.gallery`) that camera.rb and gallery.rb add to their
+# root widget instead. Both sides have to agree, so neither this file nor the
+# classes the widgets add should change alone.
 module Style
   # The CSS classes the port's widgets add, and so the ones these rules reach.
   APPLIED_CLASSES = %w[
+    camera
+    gallery
     shutterbutton
     gallerybutton
     camerabutton
@@ -61,7 +68,7 @@ module Style
       opacity: .97;
     }
 
-    gallery {
+    .gallery {
       background-color: black;
     }
 
@@ -80,28 +87,28 @@ module Style
       background: rgba(0, 0, 0, 0.45);
     }
 
-    camera .controlsframe {
+    .camera .controlsframe {
       padding: 12px;
     }
 
-    camera:not(.mobile) .bottom.controlsframe {
+    .camera:not(.mobile) .bottom.controlsframe {
       padding-left: 18px;
       padding-right: 24px;
     }
 
-    camera:not(.mobile) .startcontrolsframe {
+    .camera:not(.mobile) .startcontrolsframe {
       background: none;
     }
 
-    gallery headerbar {
+    .gallery headerbar {
       background: rgba(0, 0, 0, 0.45);
     }
 
-    gallery .controlsframe {
+    .gallery .controlsframe {
       padding: 6px;
     }
 
-    gallery button.back {
+    .gallery button.back {
       border-radius: 500px;
     }
 
@@ -111,13 +118,13 @@ module Style
       min-height: 24px;
     }
 
-    camera .recording-label {
+    .camera .recording-label {
       padding: 12px 24px;
       border-radius: 500px;
       margin-bottom: 100px;
     }
 
-    camera.portrait .recording-label {
+    .camera.portrait .recording-label {
       margin-bottom: 24px;
     }
   CSS
