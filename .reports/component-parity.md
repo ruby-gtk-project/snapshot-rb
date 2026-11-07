@@ -3,7 +3,52 @@
 | | |
 |---|---|
 | Upstream | `main` @ `9d92e7c88f2cec448ae1e8d74207db4afa384702` |
-| Port | `ruby` @ `81c790d` |
+| Port | `ruby` @ `81c790d` (original pass) / re-audited at `c85dfed` |
+
+## Round 2 addendum (audited at `c85dfed`)
+
+Re-ran the runtime gate myself: `nix develop --command xvfb-run -a ruby
+test/drive_snapshot.rb` → **`107 of 107 checks passed` / `DRIVE OK`** (up
+from 105; two checks were added along with the fix below). The task
+description's `drive_ok=true, 107 checks passed, 0 failed, 22 components` is
+confirmed real, not just quoted.
+
+**Finding 1 (`gallery.copy`/`gallery.delete`) is genuinely fixed**, verified
+by reading the code, not by trusting the commit message: `lib/gallery.rb`
+now has `insert_action_group('gallery', action_group)` (line ~40) and
+`action_group` (line ~227) builds a `Gio::SimpleActionGroup` installing
+`next`/`previous`/`open`/`copy`/`delete`. This closes the dead-menu-item bug
+on its own terms.
+
+**Finding 2 (shutter sound) is still open**, re-verified this round:
+
+```sh
+grep -rn -i "sound\|shutter.wav\|MediaFile.*resource" lib/*.rb
+```
+
+still returns only `lib/preferences_window.rb`'s switch row and
+`lib/settings.rb`'s key declaration — no playback call anywhere. Upstream
+plays `camera-shutter.wav` on capture (`src/widgets/camera.rs:454-496`); the
+port's shutter fire path (`lib/camera.rb`, `lib/shutter_button.rb`) has no
+sound-related line. Unchanged from the first pass.
+
+**Finding 3 (no `aperture`/camera pipeline — no live viewfinder, no device
+enumeration, no QR detection, no real capture) is still total and
+unchanged.** `lib/camera.rb`'s header still documents the same stub; no new
+commit touches it. This remains the single largest functional gap in the
+port: the user-facing core of a camera app — seeing yourself, switching
+cameras, actually taking a picture from a live feed — does not exist. The
+107 driven checks still never leave the "No Camera Found" branch for
+anything camera-shaped; they only prove the empty/stub state, gallery
+housekeeping, dialogs, settings round-trip and the stylesheet.
+
+No new component work landed between the first pass (`81c790d`) and this
+one (`c85dfed`) besides the gallery-action fix and an unrelated spec-loader
+change (see `test-parity.md` round 2 and `accountability-ensurance.md`
+Finding 5) — so every item left "not independently verified" below is
+*still* not independently verified, and Finding 3 (camera/aperture) and
+Finding 2 (shutter sound) are both still open gaps, not closed by this
+round's commits.
 
 Parity requires all four axes (count, style, behaviour, text) to hold **per
 component**. Below: components checked by hand against upstream source, with
@@ -141,10 +186,20 @@ line-by-line behavioural read — treat as **unverified**, not passed.
 
 ## What this means for the runtime gate
 
-`drive_ok=true, 105/105, 20 components` is real (reran it:
+`drive_ok=true, 105/105, 20 components` was real at the first pass (reran it:
 `nix develop --command xvfb-run -a ruby test/drive_snapshot.rb` → `105 of 105
 checks passed / DRIVE OK`). But "20 components" the drive touches is not "20
 components verified" — it never exercises gallery.copy/delete as GActions, a
 real camera, a real decoded QR code, or shutter-sound playback, three of
 which are confirmed broken above. A component a check only exercises in its
 degraded/stub state is not a component the gate proves.
+
+**Round 2**: now `107/107, 22 components`. gallery.copy/delete is closed (see
+addendum above, and the drive script now activates both through
+`Gtk::Widget#activate_action`, the real GAction path, not the Ruby method
+directly). Shutter-sound playback and the entire camera/aperture pipeline
+(live viewfinder, device enumeration, real capture, QR detection) are still
+never exercised by any of the 107 checks — the same caveat holds at the new,
+higher number: a bigger passing count from the same stub state is not more
+verified, it is the same unverified surface with two more housekeeping
+checks added on top.

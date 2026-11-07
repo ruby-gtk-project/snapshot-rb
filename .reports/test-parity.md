@@ -105,3 +105,44 @@ at which point they become writable. The `test/drive_snapshot.rb` suite is
 real, runs, and is worth keeping, but it is additional coverage the port
 invented, not a port of upstream's suite — do not count it toward test
 parity, and do not let "105/105" stand in for "3/3".
+
+## Round 2 addendum (audited at `c85dfed`)
+
+Re-ran the driver: **`107 of 107 checks passed` / `DRIVE OK`** (the `+2`
+checks are the gallery.copy/gallery.delete GAction activations added when
+that bug was fixed — see `component-parity.md` round-2 addendum). The
+driver remains real and genuinely runs. 0 of 3 upstream `aperture` tests are
+still ported, for the same reason as before: the camera/caps logic they pin
+still has no Ruby object to test against (`component-parity.md` §3,
+unchanged).
+
+**A new, separate finding**: a commit on this branch
+(`c85dfed`, "Fix spec runner: tolerate missing kettle-test, add
+lib/snapshot/rb.rb") claims to fix the RSpec runner and cites as its proof
+that `test/drive_snapshot.rb` still passes — which is true but proves
+nothing about RSpec. I ran the actual command the fix is named after:
+
+```sh
+$ nix develop --command rspec
+...
+uninitialized constant RspecJunitFormatter (NameError)
+...
+No examples found.
+```
+
+`rspec` still crashes before a single example loads, because `.rspec` line 9
+hardcodes `--format RspecJunitFormatter` and that gem is not present in the
+dev shell's gem set — a defect the commit's own fix (a `rescue LoadError`
+around `require "kettle/test/rspec"` in `spec/spec_helper.rb`) does not
+touch, because the formatter is loaded by RSpec's CLI before
+`spec_helper.rb` ever runs. Even past that, `spec/` still contains zero
+`*_spec.rb` files (only `spec_helper.rb` and `README.md`, unchanged from the
+first pass), so a working `rspec` invocation would report "No examples
+found" regardless. **The spec runner is not fixed.** The commit message's
+claim is broader than what it verified, and the verification line it did
+include ("Verified: ... 107 of 107 checks passed / DRIVE OK") is real but is
+evidence for the wrong command — this is exactly the "false green" shape
+`accountability-ensurance.md` tracks; see that report's Finding 5.
+
+Test parity remains **0/3**, now compounded by a fix commit whose own
+named claim does not hold up.

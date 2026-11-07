@@ -80,3 +80,18 @@ measure (component count, test count, or translated-string count) and it
 received no mention at all in `.reports/component-inventory.md` beyond a
 one-line "out of scope for this survey" flag — see
 `accountability-ensurance.md`.
+
+## Round 2 addendum (audited at `c85dfed`)
+
+Re-ran the census commands from this report against the current tree
+(`lib/`, `exe/`, `Gemfile`, `snapshot-rb.gemspec`): still no gettext marker,
+no `gettext` dependency, no `po/` directory, no `.po`/`LINGUAS`/`.pot` file
+anywhere. The two commits that landed since the first pass
+(`db21b8b` gallery actions, `c85dfed` spec-loader fix) touch no
+user-visible string and no catalogue infrastructure. **Unchanged: 0 of 102
+keys, 0 of 56 languages.** This remains the single largest gap in the port
+and the runtime gate (now 107/107) does not exercise translation at all —
+the driver never switches locale, so a 107/107 green run and 0/102
+translation keys coexist without contradiction, which is exactly why this
+ledger has to be read on its own and not inferred from the drive script's
+pass count.
