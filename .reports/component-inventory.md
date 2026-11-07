@@ -1,235 +1,256 @@
 # Component inventory — snapshot-rb vs. upstream (origin/main)
 
-Survey only; no app code written in this step. Order follows how a user
-meets the app: application → window → camera page → gallery page → dialogs
-→ settings/support.
+Survey only; no app code written in this step. This supersedes the earlier
+inventory committed on `ruby` (see `git log -- .reports/component-inventory.md`):
+window, camera, camera_controls, gallery, sliding_view, gallery_item,
+gallery_picture, gallery_video, gallery_button and video_player have all
+landed since that version was written, so every row that document marked
+`MISSING` is re-checked here against the files that now exist.
+
+Order follows how a user meets the app: application → window → camera page →
+gallery page → dialogs → settings/support.
 
 Upstream is Rust (gtk-rs) with GtkBuilder `.ui` templates under
-`data/resources/ui/`. The house style (see `ruby-gtk` skill, and
-`lib/snapshot/application.rb`'s own header) builds every widget as a
-memoized-accessor class with no `.ui` file, so "exists" below means a
-`lib/**/*.rb` class that reproduces the upstream widget's tree, CSS classes,
-signals and actions — not merely a same-named file.
+`data/resources/ui/`, plus a vendored `aperture/` crate (the camera/GStreamer
+device pipeline, not part of the GNOME app proper but required to build it).
+The house style (see `ruby-gtk` skill, and `lib/window.rb`'s own header)
+builds every widget as a memoized-accessor class with no `.ui` file, so
+"present" below means a `lib/**/*.rb` class that reproduces the upstream
+widget's tree, CSS classes, signals and actions — not merely a same-named
+file existing.
 
 ## Summary
 
 | | Upstream units | Present in `lib/` | Missing |
 |---|---:|---:|---:|
-| Widgets/dialogs/pages | 19 | 9 | 10 |
+| Widgets/dialogs/pages | 19 | 19 | 0 |
 
-The missing ten are the camera pipeline and the gallery — the two biggest and
-most behaviourally dense parts of the app. Everything currently in `lib/` is
-the shell around them (dialogs, settings, overlays, utilities) plus three
-camera-page overlay widgets (flash, guidelines, QR) that don't themselves
-need the video pipeline.
+All 19 upstream widget/page/dialog units now have a corresponding `lib/`
+class. The one functional gap that survives file-level completeness: there is
+still no Ruby binding for `aperture` (upstream's own vendored GStreamer camera
+pipeline — device enumeration, live viewfinder, QR code detection, picture/
+video capture). `lib/camera.rb` says so in its own header comment and shows
+the same "No Camera Found" status page the pre-camera.rb shell showed, with
+`take_picture`/`start_recording` stubbed to report failure via toast. This is
+not one of the four mandated gems (`glycin`, `libglycin-gtk4`,
+`gstreamer_pbutils`, `gstreamer_play`) — none of those provide a camera
+device provider or a live GStreamer pipeline — so it is a real, currently
+unfillable gap, not a hand-rolled substitute for something a gem already
+covers. Component identification stops at "does the widget/page exist and
+wire up the way upstream's does"; whether the stubbed camera behaviour counts
+as acceptable parity is a `component-parity` question, not this step's.
 
 ## Application shell
 
 ### `src/application.rs` + `src/main.rs` — app entry point, actions, accels
 → `lib/snapshot/application.rb` — **present**
 - Kind: `Adw.Application` subclass.
-- Actions: `app.quit`. (Upstream's window-level actions are installed on
-  `Window`, not `Application`.)
-- Accels: `app.quit`→`<Control>q`, `win.preferences`→`<Control>comma`,
-  `window.close`→`<Ctrl>w`, `win.take-picture`→`t`,
-  `win.toggle-gallery`→`<Control>g`, `win.toggle-guidelines`→`c`. The port's
-  `ACCELS` constant also carries `app.shortcuts`→`<Control>question`, which
-  does not appear in upstream's `setup_accels` (upstream shows shortcuts via
-  the default `<Control>question`/F1 Adwaita gives `Adw.Application`
-  automatically) — worth checking the port isn't double-binding.
-- Notes: sets `Adw::ColorScheme::ForceDark`, sets app-id, installs the
-  stylesheet. The class doc explicitly says it only builds "the shell
-  upstream's window and camera page share" and that camera/gallery pages are
-  not yet wired in — this matches the gap below.
+- Actions: `app.quit`. Window-level actions (`win.preferences`,
+  `win.about`, `win.take-picture`, `win.toggle-guidelines`,
+  `win.toggle-gallery`, `win.countdown`) are installed on `Window` now that it
+  exists, matching upstream's split between `Application` and `Window`.
+- Accels installed by `Window#setup_accels`: `win.preferences`→
+  `<Control>comma`, `win.take-picture`→`t`, `win.toggle-guidelines`→`c`.
+  `win.toggle-gallery` has no accel in `Window#setup_accels` even though the
+  earlier inventory recorded upstream binding `<Control>g` to it — worth
+  checking against `application.rs`'s `setup_accels` directly in the
+  `component-parity` pass, since this file alone doesn't show it.
 
 ### `src/config.rs.in` — build-time constants (`APP_ID`, `VERSION`, `PROFILE`, `IS_DEVEL`, `PKGDATADIR`)
 → constants inlined across `lib/snapshot/application.rb`, `lib/about_dialog.rb` — **present** (no 1:1 file; not a component)
 
 ### `src/enums.rs` — `CaptureMode`, `ShutterMode`, `PictureFormat` GEnums
-→ `lib/enums.rb` — **present**
+→ `lib/enums.rb` — **present** (also now has `ControlsLayout`, used by
+  `CameraControls`/`Camera` — check it against upstream's actual enum set in
+  `component-parity`, since it isn't named in `enums.rs` by that exact list
+  above).
 
 ### `src/utils.rs` — misc helpers (debug info dump, etc.)
 → `lib/utils.rb` — **present**
 
 ### `data/org.gnome.Snapshot.gschema.xml.in` — GSettings schema
-→ `lib/settings.rb` — **present** (keys: `window-width`, `window-height`,
-  `is-maximized`, `play-shutter-sound`, `show-composition-guidelines`,
-  `enable-audio-recording`, `enable-hardware-encoding`, `countdown`,
-  `capture-mode`, `picture-format`, `last-camera-id`). Verify `lib/settings.rb`
-  covers all eleven keys, not just the window-geometry ones.
+→ `lib/settings.rb` — **present** (keys referenced across the port's widgets:
+  `window-width`, `window-height`, `is-maximized`, `show-composition-
+  guidelines`, `countdown`, `capture-mode`, `picture-format`. Not directly
+  confirmed in this pass: `play-shutter-sound`, `enable-audio-recording`,
+  `enable-hardware-encoding`, `last-camera-id` — grep `lib/settings.rb` for
+  all eleven keys in `component-parity`.)
 
 ### `data/resources/style.css`
-→ `lib/style.rb` — **present** (CSS inlined as a heredoc + `Gtk::CssProvider`,
-  per the file's own header comment).
+→ `lib/style.rb` — **present** (CSS inlined as a heredoc + `Gtk::CssProvider`).
 
 ## Window and camera page
 
 ### `src/widgets/window.rs` + `data/resources/ui/window.ui` — main window
-→ **`lib/window.rb` — MISSING**
-- Kind: `Adw.ApplicationWindow` template (`AdwToastOverlay` →
-  `AdwNavigationView` with two `AdwNavigationPage`s: `camera_page` holding
-  `Camera`, `gallery_page` holding `Gallery`).
-- Actions installed: `win.take-picture` (async), `win.about`,
-  `win.toggle-gallery`, `win.toggle-guidelines`, `win.preferences`, plus a
-  GSettings-backed `countdown` action (`settings.create_action`).
-- Signals: `camera_page`'s `hidden`/`showing` → `on_camera_page_hidden` /
-  `on_camera_page_showing` (start/stop the camera stream and shutter
-  enablement); `gallery.connect_item_added`/`item_removed` toggle
-  `win.toggle-gallery`'s enabled state and pop the nav view when the gallery
-  empties; `notify::is-active` kicks off `camera.start()` once; `notify::
-  suspended` stops/restarts the stream; countdown timer drives the shutter.
-- Behaviour: window-size persistence to GSettings, devel CSS class,
-  `show_about_dialog` (→ `AboutDialog`, present), `show_preferences_window`
-  (→ `PreferencesWindow`, present), countdown start/cancel/cleanup,
-  `shutter_action` (branches on `CaptureMode`).
-- This is the hub that would wire together every widget below; none of it
-  exists yet.
+→ `lib/window.rb` — **present** (253 lines)
+- Kind: `Adw.ApplicationWindow` wrapping an `Adw.ToastOverlay` over an
+  `Adw.NavigationView` with two `Adw.NavigationPage`s (`camera_page` holding
+  `Camera`, `gallery_page` holding `Gallery`) — matches the template shape.
+- Actions installed: `win.preferences`, `win.about`, `win.take-picture`,
+  `win.toggle-guidelines`, `win.toggle-gallery`, plus the GSettings-backed
+  `countdown` action via `@settings.create_action('countdown')`.
+- Signals: `camera_page` `hidden`/`showing` →
+  `on_camera_page_hidden`/`on_camera_page_showing`; window `close-request` →
+  persist settings; `notify::is-active`/`notify::suspended` → start/stop the
+  (stubbed) camera stream; `gallery` item-added/item-removed → enable/disable
+  `win.toggle-gallery` and pop the nav view when empty; a `GLib::Timeout`
+  drives the countdown.
+- Behaviour matches the previous inventory's read of `window.rs`: window-size
+  persistence, `show_about_dialog`/`show_preferences` delegate to
+  `AboutDialog`/`PreferencesWindow`, countdown start/cancel, `shutter_action`
+  branching on `CaptureMode`. `inhibit`/`uninhibit` for recording are present
+  and call through to `@app.inhibit`/`uninhibit`.
 
 ### `src/widgets/camera.rs` + `data/resources/ui/camera.ui` — the viewfinder page
-→ **`lib/camera.rb` — MISSING**
-- Kind: `Adw.BreakpointBin` template, CSS class `portrait` (toggled by
-  current breakpoint, also `mobile`).
-- Template children (13): a `GtkStack` with `loading` / `not-found` /
-  `content` pages, an `Aperture::Viewfinder`, `CameraControls`,
-  `FlashBin`, `GuidelinesBin`, `QrScreenBin`, a camera `GtkSingleSelection`
-  (for the device picker), `AdwBreakpoint`s (`single_landscape_bp`,
-  `dual_portrait_bp`, `dual_landscape_bp`), `AdwMultiLayoutView` and a
-  `GtkMenuButton` with `primary_menu`.
-  - Breakpoints swap `AdwMultiLayoutView` layout name and flip
-    `camera_mode_toggles`/`camera_controls` orientation; each has an `apply`
-    signal → `change_breakpoint`.
-- Signals it connects to: device provider `camera-added`/`camera-removed`;
-  viewfinder `notify::state`, `code-detected` (QR), `notify::is-recording`,
-  `picture-done`; selection `notify::selected-item`; `camera_controls`'
-  `camera-switched`; `notify::current-breakpoint`.
-- Depends on `aperture` crate (the camera/GStreamer pipeline, code detection,
-  device enumeration) — no Ruby equivalent exists in this repo; this is the
-  single largest missing unit and the one most likely to need the mandatory
-  binding gems (`gstreamer_play`/`gstreamer_pbutils`, and `glycin`/
-  `libglycin-gtk4` for thumbnail/image decode once captures land in the
-  gallery).
+→ `lib/camera.rb` — **present** (228 lines), **functionally stubbed**
+- Kind: `Adw.BreakpointBin`, CSS classes `camera`/`portrait`/`mobile`
+  (breakpoint-toggled) — matches.
+- Children built: `Adw.BottomSheet` (QR bottom sheet) wrapping an
+  `Adw.ToolbarView` whose content is a `Gtk.Overlay` nesting `FlashBin` →
+  `GuidelinesBin` → `QrScreenBin` → a `Gtk.Stack` with a "No Camera Found"
+  `Adw.StatusPage`, plus a recording-duration `Gtk.Revealer`/`Gtk.Label`, and
+  `CameraControls` as the toolbar's bottom bar. Three `Adw.Breakpoint`s
+  (`single_landscape_bp`, `dual_portrait_bp`, `dual_landscape_bp`) toggle
+  `mobile` and flip `CameraControls#orientation`, matching upstream's three.
+- Gap: no `Aperture::Viewfinder` equivalent, no device picker
+  `Gtk::SingleSelection`/`camera-added`/`camera-removed`, no `code-detected`
+  wiring into the QR bottom sheet, no `AdwMultiLayoutView`/
+  `primary_menu`. `take_picture`/`start_recording` are stubs that always
+  toast failure; `start_stream`/`stop_stream`/`set_page_visible` are no-ops.
+  This is the `aperture` gap described in Summary above, not a missing
+  mandated gem.
 
 ### `src/widgets/camera_controls.rs` + `data/resources/ui/camera_controls.ui` — shutter row
-→ **`lib/camera_controls.rb` — MISSING**
-- Kind: `GtkBox` template (`halign`/`valign` center, spacing 24).
-- Children: `GtkStack` `gallery_button_stack` (`AdwBin` fake vs. real
-  `GalleryButton`, action `win.toggle-gallery`), `ShutterButton`
-  (action `win.take-picture`), `GtkStack` `camera_menu_button_stack`
-  (`GtkMenuButton camera_menu_button` CSS `camerabutton circular` with a
-  `GListModel` camera-picker popover built in code and CSS class `menu`, vs.
-  `GtkButton camera_switch_button` CSS `camerabutton circular`, signal
-  `clicked`→`on_camera_switch_button_clicked`, vs. a fake `AdwBin` page).
-- Custom signal: `camera-switched`. Connects to `gallery.item-added`/
-  `item-removed` to keep the gallery-button stack in sync.
+→ `lib/camera_controls.rb` — **present** (210 lines)
+- Kind: `Gtk.Box`, `halign`/`valign` center, spacing 24 — matches.
+- Children: `gallery_button_stack` (`Adw.Bin` fake vs. `GalleryButton`),
+  `ShutterButton`, `camera_menu_button_stack` (`Gtk.MenuButton` CSS
+  `camerabutton circular` with a popover + `Gtk::ListView` camera picker, vs.
+  `Gtk.Button camera_switch_button` CSS `camerabutton circular` signal
+  `clicked`, vs. a fake `Adw.Bin`) — matches the three-way stack upstream
+  uses for 0/1, exactly-2, and 3+ camera counts
+  (`update_visible_camera_button`).
+- Custom signal: `connect_camera_switched`. Listens to `gallery`
+  item-added/item-removed to keep the gallery-button stack in sync, and to
+  `@selection`'s `notify::selected-item` to close the popover. `set_layout`
+  (named `layout=` here) hides the shutter and gallery button for
+  `DETECTING_CODES`, matching upstream.
 
 ### `src/widgets/shutter_button.rs`
-→ `lib/shutter_button.rb` — **present**
+→ `lib/shutter_button.rb` — **present** (339 lines)
 
 ### `src/widgets/flash_bin.rs`
-→ `lib/flash_bin.rb` — **present**
+→ `lib/flash_bin.rb` — **present** (101 lines)
 
 ### `src/widgets/guidelines_bin.rs`
-→ `lib/guidelines_bin.rb` — **present**
+→ `lib/guidelines_bin.rb` — **present** (265 lines)
 
 ### `src/widgets/qr_screen_bin.rs` + (shares `camera.ui`'s QR surface)
-→ `lib/qr_screen_bin.rb` — **present**
+→ `lib/qr_screen_bin.rb` — **present** (239 lines)
 
 ### `src/widgets/qr_bottom_sheet.rs` + `data/resources/ui/qr_bottom_sheet.ui`
-→ `lib/qr_bottom_sheet.rb` — **present**
-- Actions on upstream: `qr-bottom-sheet.copy` and one async action (open
-  link/share) — worth confirming the port installs both.
+→ `lib/qr_bottom_sheet.rb` — **present** (158 lines)
+- Not directly re-confirmed this pass: that both of upstream's actions
+  (`qr-bottom-sheet.copy` and the async open-link/share action) are both
+  installed — check in `component-parity`.
 
 ### `src/widgets/camera_row.rs` — one row in the camera-picker popover
-→ `lib/camera_row.rb` — **present**
+→ `lib/camera_row.rb` — **present** (68 lines); consumed by
+  `CameraControls#camera_row_factory`'s `Gtk::SignalListItemFactory`.
 
 ## Gallery
 
 ### `src/widgets/gallery.rs` + `data/resources/ui/gallery.ui` — the gallery page
-→ **`lib/gallery.rb` — MISSING**
-- Kind: `Adw.BreakpointBin` template, same `360×294` size floor as `Camera`
-  (comment: "must match the requests in camera.ui").
-- Breakpoint: `max-width: 500` → `multi_layout` layout `mobile`,
-  `next_button.hexpand = true`.
-- Children: `AdwToolbarView` with `AdwHeaderBar` (title hidden, end
-  `GtkMenuButton menu_button` CSS `flat circular`, tooltip "Gallery Menu"),
-  content `SlidingView`, bottom `AdwMultiLayoutView multi_layout` with four
-  named slots: `media_controls` (`GtkMediaControls`, CSS `videoplayercontrols
-  osd`), `next_button`/`prev_button` (`GtkButton`, action `gallery.next`/
-  `gallery.previous`, CSS `osd circular gallerycontrols`), `open_external`
-  (action `gallery.open`, CSS `osd gallerycontrols circular`); two
-  `AdwLayout`s (`desktop`, `mobile`) arrange those slots differently.
-- Actions installed: `gallery.next`, `gallery.previous`, `gallery.open`
-  (async), `gallery.copy`, `gallery.delete` (async).
-- Custom signals: `item-added`, `item-removed` (consumed by `Window` and
-  `CameraControls` above). Internally listens to `sliding_view`'s
-  `target-page-reached` and `notify::current-page`.
+→ `lib/gallery.rb` — **present** (308 lines)
+- Kind: wraps a `SlidingView` of `GalleryPicture`/`GalleryVideo` items read
+  from `Utils.pictures_dir`/`Utils.videos_dir` with plain `Dir`/`File` calls
+  (upstream uses gio's async directory enumerator; the class header
+  documents the substitution as deliberate, not a hand-rolled replacement
+  for a mandated gem — nothing here overlaps `glycin`/`gstreamer_*`).
+- Custom signals: `connect_item_added`/`connect_item_removed`, consumed by
+  `Window` and `CameraControls`. Not independently re-verified this pass:
+  the `gallery.next`/`previous`/`open`/`copy`/`delete` actions and the
+  `Adw.MultiLayoutView` bottom bar (media controls, prev/next, open-external)
+  the earlier inventory described from `gallery.ui` — read `gallery.rb` end
+  to end in `component-parity`.
 
 ### `src/widgets/sliding_view.rs` — swipeable item carousel behind the gallery
-→ **`lib/sliding_view.rb` — MISSING**
-- Kind: custom `Gtk.Widget` (not template-backed; built entirely in code).
-- Controllers: `Adw::SwipeTracker` (`begin-swipe`/`update-swipe`/
-  `end-swipe`), `Gtk::EventControllerScroll` (`scroll`) — both behaviour-only,
-  not widgets, but essential to port (drag/scroll paging between gallery
-  items).
-- Custom signal: `target-page-reached`; animates with `Adw::TimedAnimation`
-  (`connect_done`).
+→ `lib/sliding_view.rb` — **present** (126 lines)
+- Kind: wraps `Adwaita::Carousel` rather than reimplementing upstream's
+  from-scratch swipe/measure/animate `Gtk.Widget` — the class header quotes
+  upstream's own doc comment ("similar to AdwCarousel") as justification.
+  `append`/`prepend`/`insert`/`move_to`/`remove`/`scroll_to`/`next_page`/
+  `prev_page` all present; `connect_target_page_reached`/
+  `connect_current_page_notify` stand in for upstream's `target-page-reached`
+  signal and `notify::current-page`.
 
 ### `src/widgets/gallery_item.rs` — one item's data/model wrapper
-→ **`lib/gallery_item.rb` — MISSING**
-- Kind: plain `GObject` (not a widget) wrapping a captured file; has a
-  `Gtk::GestureClick`-style `released` connection point used by callers.
+→ `lib/gallery_item.rb` — **present** (123 lines)
+- Kind: plain Ruby object (not a widget subclass — the header explains the
+  Ruby bindings can't subclass this deeply and keep vfuncs/signals correct),
+  base class of `GalleryPicture`/`GalleryVideo`. Owns file/is_picture/
+  thumbnail/loaded state and the secondary-click `Gtk::PopoverMenu` built
+  from `Utils.gallery_item_menu`.
 
 ### `src/widgets/gallery_picture.rs` — still-image gallery slide
-→ **`lib/gallery_picture.rb` — MISSING**
-- Kind: widget wrapping `Gtk.Picture`/`Gtk.MediaFile`-style loading, with a
-  construct-only `load` property (lazy decode). A natural candidate for the
-  `glycin`/`libglycin-gtk4` gems once this is ported — do not hand-roll image
-  decoding here.
+→ `lib/gallery_picture.rb` — **present** (39 lines)
+- Decodes with `Gly::Loader`/`GlyGtk4.frame_get_texture` — the mandated
+  `glycin`/`libglycin-gtk4` gems, matching upstream's `glycin`/`glycin_gtk4`
+  Rust calls one-for-one (sync here vs. upstream's future-based async).
 
 ### `src/widgets/gallery_video.rs` — video gallery slide
-→ **`lib/gallery_video.rb` — MISSING**
-- Kind: widget wrapping video playback for a captured clip.
+→ `lib/gallery_video.rb` — **present** (39 lines); delegates to
+  `VideoPlayer` for both playback and its own thumbnail.
 
 ### `src/widgets/gallery_button.rs` — "open gallery" thumbnail button
-→ **`lib/gallery_button.rb` — MISSING**
-- Kind: `Gtk.Widget`/button subclass, CSS classes `gallerybutton flat`.
-  Bindings via `connect_notify_local`; listens to `gallery.item-added`/
-  `item-removed` to show the latest thumbnail.
+→ `lib/gallery_button.rb` — **present** (82 lines)
+- Upstream overrides `GtkWidget::snapshot()` for a GSK-node grow-in
+  animation; the Ruby bindings can't override that vfunc (documented in the
+  header), so this port fades the new thumbnail in with
+  `Adwaita::TimedAnimation` instead — same CSS class (`gallerybutton flat`),
+  same `item-added`/`item-removed` wiring, visibly different transition.
 
 ### `src/widgets/video_player.rs` — the controls/player embedded in `GtkMediaControls`
-→ **`lib/video_player.rb` — MISSING**
-- Kind: wraps a `Gtk.MediaFile` stream; CSS class `videoplayercontrols` on
-  its `controls` child. Signals: `notify::invalidate-contents`,
-  `notify::playing`. This is squarely GStreamer-playback territory —
-  `gstreamer_play` (`GstPlay`) is the mandatory gem for this, not a
-  hand-rolled player.
+→ `lib/video_player.rb` — **present** (101 lines)
+- Uses `Gtk::MediaFile` (GTK's own GStreamer-backed playback abstraction),
+  matching upstream's `gtk::MediaFile` call; the header explains this is why
+  the file doesn't need the `gstreamer_play` binding directly — `GstPlay` is
+  one layer further down than this widget reaches, under `Gtk::MediaFile`
+  itself. `thumbnail`/`snapshot_thumbnail`, `realize`, `pause` all present.
 
 ## Dialogs and support windows
 
 ### `src/widgets/preferences_window.rs` + `data/resources/ui/preferences_window.ui`
-→ `lib/preferences_window.rb` — **present**
+→ `lib/preferences_window.rb` — **present** (137 lines)
 
 ### `data/resources/ui/shortcuts.ui` — `AdwShortcutsDialog`, no backing `.rs`
-→ `lib/shortcuts_dialog.rb` — **present** (3 sections / 12 items, matches
-  upstream's General/Camera/Gallery breakdown).
+→ `lib/shortcuts_dialog.rb` — **present** (68 lines; 3 sections / 12 items,
+  matches upstream's General/Camera/Gallery breakdown per the earlier
+  inventory's count).
 
 ### `Window::show_about_dialog` (inline in `window.rs`) + `data/resources/org.gnome.Snapshot.metainfo.xml.in.in`
-→ `lib/about_dialog.rb` — **present**
+→ `lib/about_dialog.rb` — **present** (79 lines), instantiated from
+  `Window#show_about_dialog` with `version: Snapshot::Rb::VERSION`.
 
 ## Resources, schema, i18n (not components, but part of full parity)
 
 - `data/resources/resources.gresource.xml.in` — GResource manifest; not
-  applicable 1:1 (the port has no gresource bundle by design — see
-  `lib/style.rb`'s header), but every resource it lists (icons, sounds,
-  `.ui` files, metainfo, style.css) should have a corresponding Ruby-side
-  equivalent or asset. `data/resources/sounds/camera-shutter.wav` in
-  particular has no obvious Ruby-side consumer yet — grep `lib/` for shutter
-  sound playback once `Camera`/`ShutterButton` land.
-- `po/POTFILES.in` + 65 `po/*.po` catalogues — translation-parity is out of
-  scope for this survey (see the `translation-parity` skill); flagged only so
-  the next step doesn't assume English-only strings are correct.
-- Icons under `data/icons/` and `data/resources/icons/` (6 SVGs) — asset
-  parity, not widget parity; not checked here.
+  applicable 1:1 (no gresource bundle by design, per `lib/style.rb`'s
+  header). Every file it lists maps to something ported: the 7 `.ui` files
+  above, `style.css` → `style.rb`, the metainfo → `about_dialog.rb`, 6 icon
+  SVGs (asset parity, not checked here). `sounds/camera-shutter.wav` still
+  has no confirmed Ruby-side consumer — `grep -rn shutter lib/` to find
+  whether `ShutterButton`/`Camera` play it, in `component-parity`.
+- `po/POTFILES.in` + 56 `po/*.po` catalogues — translation-parity is out of
+  scope for this survey (see the `translation-parity` skill).
+- Icons under `data/icons/` and `data/resources/icons/` (6 SVGs under
+  resources + 3 app icons) — asset parity, not checked here.
+- `aperture/` — the vendored GStreamer camera-pipeline crate (device
+  enumeration, viewfinder, code detection, capture). No Ruby binding exists
+  for it anywhere in this ecosystem; see Summary above. This is the one
+  upstream dependency that is not a GNOME-stack GI typelib and therefore
+  cannot be wired in the way `glycin`/`gstreamer_pbutils`/`gstreamer_play`/
+  `libglycin-gtk4` were.
 
 ## Full component list (upstream file → lib path → kind → present?)
 
@@ -240,31 +261,44 @@ need the video pipeline.
 | `src/utils.rs` | `lib/utils.rb` | helpers | yes |
 | `data/org.gnome.Snapshot.gschema.xml.in` | `lib/settings.rb` | GSettings wrapper | yes |
 | `data/resources/style.css` | `lib/style.rb` | CSS provider | yes |
-| `src/widgets/window.rs` + `ui/window.ui` | `lib/window.rb` | `Adw.ApplicationWindow` | **no** |
-| `src/widgets/camera.rs` + `ui/camera.ui` | `lib/camera.rb` | `Adw.BreakpointBin` | **no** |
-| `src/widgets/camera_controls.rs` + `ui/camera_controls.ui` | `lib/camera_controls.rb` | `Gtk.Box` | **no** |
+| `src/widgets/window.rs` + `ui/window.ui` | `lib/window.rb` | `Adw.ApplicationWindow` | yes |
+| `src/widgets/camera.rs` + `ui/camera.ui` | `lib/camera.rb` | `Adw.BreakpointBin` | yes (stubbed capture) |
+| `src/widgets/camera_controls.rs` + `ui/camera_controls.ui` | `lib/camera_controls.rb` | `Gtk.Box` | yes |
 | `src/widgets/shutter_button.rs` | `lib/shutter_button.rb` | widget | yes |
 | `src/widgets/flash_bin.rs` | `lib/flash_bin.rb` | widget | yes |
 | `src/widgets/guidelines_bin.rs` | `lib/guidelines_bin.rb` | widget | yes |
 | `src/widgets/qr_screen_bin.rs` | `lib/qr_screen_bin.rb` | widget | yes |
 | `src/widgets/qr_bottom_sheet.rs` + `ui/qr_bottom_sheet.ui` | `lib/qr_bottom_sheet.rb` | `Adw` bottom sheet | yes |
 | `src/widgets/camera_row.rs` | `lib/camera_row.rb` | row widget | yes |
-| `src/widgets/gallery.rs` + `ui/gallery.ui` | `lib/gallery.rb` | `Adw.BreakpointBin` | **no** |
-| `src/widgets/sliding_view.rs` | `lib/sliding_view.rb` | custom `Gtk.Widget` | **no** |
-| `src/widgets/gallery_item.rs` | `lib/gallery_item.rb` | `GObject` model | **no** |
-| `src/widgets/gallery_picture.rs` | `lib/gallery_picture.rb` | widget | **no** |
-| `src/widgets/gallery_video.rs` | `lib/gallery_video.rb` | widget | **no** |
-| `src/widgets/gallery_button.rs` | `lib/gallery_button.rb` | widget | **no** |
-| `src/widgets/video_player.rs` | `lib/video_player.rb` | widget | **no** |
+| `src/widgets/gallery.rs` + `ui/gallery.ui` | `lib/gallery.rb` | `Adw.BreakpointBin` | yes |
+| `src/widgets/sliding_view.rs` | `lib/sliding_view.rb` | wraps `Adw.Carousel` | yes |
+| `src/widgets/gallery_item.rs` | `lib/gallery_item.rb` | plain object (not `GObject`) | yes |
+| `src/widgets/gallery_picture.rs` | `lib/gallery_picture.rb` | widget (glycin-backed) | yes |
+| `src/widgets/gallery_video.rs` | `lib/gallery_video.rb` | widget | yes |
+| `src/widgets/gallery_button.rs` | `lib/gallery_button.rb` | widget | yes |
+| `src/widgets/video_player.rs` | `lib/video_player.rb` | widget (`Gtk::MediaFile`) | yes |
 | `src/widgets/preferences_window.rs` + `ui/preferences_window.ui` | `lib/preferences_window.rb` | `Adw.PreferencesWindow` | yes |
 | `ui/shortcuts.ui` | `lib/shortcuts_dialog.rb` | `Adw.ShortcutsDialog` | yes |
 | `window.rs: show_about_dialog` + metainfo | `lib/about_dialog.rb` | `Adw.AboutDialog` | yes |
+| `aperture/` crate | *(none)* | GStreamer camera pipeline | **no — no Ruby binding exists** |
 
 ## What's next (not this step)
 
-The ten missing units are exactly the camera/GStreamer pipeline and the
-gallery/video-playback surface — the parts most likely to need the mandatory
-binding gems (`glycin`, `gstreamer_pbutils`, `gstreamer_play`,
-`libglycin-gtk4`) rather than hand-rolled equivalents. Any future port of
-`Camera`, `GalleryPicture`, `GalleryVideo` or `VideoPlayer` should wire those
-gems in before writing widget code, per the fork's standing instructions.
+Every file-level unit exists. What's left is:
+
+1. **`component-parity`** on each file above, especially `window.rb`,
+   `camera.rb`, `camera_controls.rb` and `gallery.rb` — the four largest and
+   most-recently-landed files — to check CSS classes, signal names and
+   action names match upstream exactly rather than just "a plausible
+   equivalent exists."
+2. **The `aperture` gap** in `camera.rb`: no live viewfinder, no capture, no
+   QR detection trigger. This is a real, currently unfillable missing
+   feature (no Ruby/GI binding exists for a GStreamer camera device
+   provider), not something the mandated gems were supposed to cover —
+   flagging it here so it isn't later described as "out of scope" or "by
+   design."
+3. **`test-parity`** and **`translation-parity`** — not run in this survey.
+4. Items individually flagged above under each file as "not directly
+   re-confirmed this pass" (accel bindings, all 11 GSettings keys, the
+   QR-bottom-sheet actions, the gallery action set, shutter-sound playback) —
+   each needs a direct read against upstream before being called settled.
