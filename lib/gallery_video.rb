@@ -17,10 +17,18 @@ class GalleryVideo < GalleryItem
   # than running in the background.
   def pause = @video_player&.pause
 
+  # Upstream's realize() is a GTK vfunc: GTK calls it itself, once, when the
+  # widget actually gets mapped into a shown window. Calling it by hand here
+  # used to mark the not-yet-parented video_player realized before GTK ever
+  # attached it to the carousel; GTK then aborted the process with
+  # `gtk_widget_root: assertion failed: (!priv->realized)` the moment the
+  # slide was really inserted and GTK tried to realize it itself. set_file
+  # already defers to VideoPlayer's own realize vfunc (see video_player.rb),
+  # so nothing here needs to force it early — thumbnail() simply returns nil
+  # until the stream has actually parsed a frame, the same as it always did.
   def load_content
     video_player.set_file(file)
     self.item = video_player
-    video_player.realize
 
     (texture = video_player.thumbnail).then { |t| set_thumbnail(t) if t }
   end

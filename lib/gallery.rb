@@ -23,8 +23,8 @@ class Gallery
 
   def initialize
     @current_item = nil
-    @on_item_added = nil
-    @on_item_removed = nil
+    @on_item_added = []
+    @on_item_removed = []
   end
 
   def build
@@ -66,9 +66,17 @@ class Gallery
 
   def items = sliding_view.pages
 
-  def connect_item_added(&block) = @on_item_added = block
+  # Window, GalleryButton and CameraControls each watch the gallery
+  # independently — the enable/disable of win.toggle-gallery, the circular
+  # thumbnail's fade-in, and the control row's placeholder swap are three
+  # separate concerns, not one. A single `@on_item_added = block` slot here
+  # used to mean whichever of the three called `connect_item_added` last
+  # silently overwrote the other two, so only CameraControls's own update
+  # ever ran — the gallery button's thumbnail never painted, and
+  # win.toggle-gallery never went insensitive when the gallery emptied.
+  def connect_item_added(&block) = @on_item_added << block
 
-  def connect_item_removed(&block) = @on_item_removed = block
+  def connect_item_removed(&block) = @on_item_removed << block
 
   def next_item
     page = sliding_view.next_page
@@ -112,7 +120,7 @@ class Gallery
     sliding_view.remove(item)
     item.file.delete
     load_neighbor_pages
-    @on_item_removed&.call(self, is_last)
+    @on_item_removed.each { |block| block.call(self, is_last) }
     item
   end
 
@@ -121,7 +129,7 @@ class Gallery
     def add_item(file, load, is_picture)
       item = is_picture ? GalleryPicture.new(file, load: load) : GalleryVideo.new(file, load: load)
       sliding_view.prepend(item)
-      @on_item_added&.call(self, item) if load
+      @on_item_added.each { |block| block.call(self, item) } if load
       item
     end
 

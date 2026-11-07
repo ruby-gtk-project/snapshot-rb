@@ -67,7 +67,13 @@ class Window
 
   def send_toast(text) = toast_overlay.add_toast(Adwaita::Toast.new(text))
 
-  def set_shutter_enabled(enabled) = window.action_set_enabled('win.take-picture', enabled)
+  # `Gtk::Widget#action_set_enabled` only reaches actions a widget class
+  # installs with `install_action` (none of this port's are); the ones added
+  # through `add_action` live in the window's own `Gio::ActionMap` and are
+  # enabled/disabled through the `Gio::SimpleAction` itself, which
+  # `action_set_enabled` silently failed to do — `win.take-picture` never
+  # actually went insensitive while the gallery page was showing.
+  def set_shutter_enabled(enabled) = window.lookup_action('take-picture').enabled = enabled
 
   def inhibit(reason)
     uninhibit
@@ -110,10 +116,10 @@ class Window
 
     def gallery
       @gallery ||= Gallery.new.tap do |g|
-        g.connect_item_added { |_, _item| window.action_set_enabled('win.toggle-gallery', true) }
+        g.connect_item_added { |_, _item| window.lookup_action('toggle-gallery').enabled = true }
         g.connect_item_removed do |_, _is_last|
           if g.items.empty?
-            window.action_set_enabled('win.toggle-gallery', false)
+            window.lookup_action('toggle-gallery').enabled = false
             navigation_view.pop
           end
         end
@@ -242,6 +248,6 @@ class Window
     end
 
     def show_about_dialog
-      AboutDialog.new(version: Rb::VERSION).build.present(window)
+      AboutDialog.new(version: Snapshot::Rb::VERSION).build.present(window)
     end
 end
