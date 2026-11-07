@@ -448,18 +448,37 @@ GtkDriver.drive(Snapshot::Application.new, shots: SHOTS) do |d, app|
     d.shot('08-gallery-next-item')
   end
 
-  d.step('deleting the current item removes it from the model and the disk') do
+  d.step('the gallery.copy GAction (not just the Ruby method) is reachable') do
+    gallery = app.window.send(:gallery)
+    bin = gallery.send(:breakpoint_bin)
+    before = gallery.send(:sliding_view).current_page.file.path
+    copy_calls = 0
+    gallery.define_singleton_method(:copy) { |*| copy_calls += 1; true }
+
+    # Utils.gallery_item_menu's Gio::Menu names "gallery.copy" / "gallery.delete".
+    # Firing it through Gtk::Widget#activate_action (the same resolution path
+    # GTK uses for a clicked menu item) — not calling Gallery#copy directly —
+    # is what proves the action group inserted in Gallery#build is actually
+    # reachable from the widget tree, which is the bug component-parity.md
+    # flagged: the menu offered these actions but nothing had ever installed
+    # them, so clicking either did nothing.
+    bin.activate_action('gallery.copy', nil)
+    d.check('activating gallery.copy invoked Gallery#copy') { copy_calls == 1 }
+    d.check('the current item is unchanged by copying') { gallery.send(:sliding_view).current_page.file.path == before }
+  end
+
+  d.step('the gallery.delete action removes the current item from the model and the disk') do
     gallery = app.window.send(:gallery)
     deleted_path = gallery.send(:sliding_view).current_page.file.path
 
     d.check('the file exists before deleting') { File.exist?(deleted_path) }
-    gallery.delete
+    gallery.send(:breakpoint_bin).activate_action('gallery.delete', nil)
     d.check('one item is left') { gallery.items.length == 1 }
     d.check('the file is gone from disk') { !File.exist?(deleted_path) }
   end
 
-  d.step('deleting the last item closes the gallery and disables its action') do
-    app.window.send(:gallery).delete
+  d.step('deleting the last item (via the same gallery.delete action) closes the gallery and disables its action') do
+    app.window.send(:gallery).send(:breakpoint_bin).activate_action('gallery.delete', nil)
 
     d.check('the gallery is empty') { app.window.send(:gallery).items.empty? }
     d.check('toggle-gallery disabled itself') { !app.window.window.lookup_action('toggle-gallery').enabled? }

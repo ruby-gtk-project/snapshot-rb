@@ -12,7 +12,11 @@ require_relative 'gallery_video'
 # SlidingView of the pictures and videos under Utils.pictures_dir /
 # Utils.videos_dir, a header bar with a menu, and a control strip with
 # previous/next buttons, the open-externally and delete actions, and the
-# media controls a video slide binds in.
+# media controls a video slide binds in. The gallery.next/previous/open/
+# copy/delete actions upstream installs on the widget class are installed
+# here as a Gio::SimpleActionGroup under the "gallery" prefix (see
+# #action_group) so the secondary-click menu's gallery.copy/gallery.delete
+# items (Utils.gallery_item_menu) actually resolve to something.
 #
 # Upstream reads the two directories with gio's async enumerator. This port
 # reads them with plain Ruby Dir/File calls instead, the way Utils already
@@ -33,6 +37,7 @@ class Gallery
       root.height_request = 294
       root.add_css_class('gallery')
       root.add_breakpoint(mobile_breakpoint)
+      root.insert_action_group('gallery', action_group)
 
       root.child = toolbar_view
 
@@ -101,8 +106,10 @@ class Gallery
   end
 
   # Upstream's copy(): the current item's file, as a Gio::File, onto the
-  # clipboard.
-  def copy(clipboard)
+  # clipboard. `clipboard` defaults to the root widget's own, so the
+  # `gallery.copy` action (below) and a caller that already holds a
+  # clipboard reference both work.
+  def copy(clipboard = breakpoint_bin.clipboard)
     item = sliding_view.current_page
     return false unless item
 
@@ -208,6 +215,43 @@ class Gallery
     rescue SystemCallError => e
       warn "Could not load items from #{dir}: #{e.message}"
       []
+    end
+
+    # Upstream installs gallery.next/previous/open/copy/delete as widget-class
+    # actions (src/widgets/gallery.rs's class_init); the house style can't
+    # subclass a widget class, so this port follows qr_bottom_sheet.rb's
+    # pattern instead: a Gio::SimpleActionGroup inserted on the root widget
+    # under the "gallery" prefix. Utils.gallery_item_menu's Gio::Menu names
+    # gallery.copy/gallery.delete, and without this group those menu items
+    # resolved to nothing and silently did nothing when clicked.
+    def action_group
+      @action_group ||= Gio::SimpleActionGroup.new.tap do |group|
+        group.add_action(next_action)
+        group.add_action(previous_action)
+        group.add_action(open_action)
+        group.add_action(copy_action)
+        group.add_action(delete_action)
+      end
+    end
+
+    def next_action
+      Gio::SimpleAction.new('next').tap { |action| action.signal_connect('activate') { next_item } }
+    end
+
+    def previous_action
+      Gio::SimpleAction.new('previous').tap { |action| action.signal_connect('activate') { previous_item } }
+    end
+
+    def open_action
+      Gio::SimpleAction.new('open').tap { |action| action.signal_connect('activate') { open_with_system(breakpoint_bin.root) } }
+    end
+
+    def copy_action
+      Gio::SimpleAction.new('copy').tap { |action| action.signal_connect('activate') { copy } }
+    end
+
+    def delete_action
+      Gio::SimpleAction.new('delete').tap { |action| action.signal_connect('activate') { delete } }
     end
 
     # Memoized widget methods

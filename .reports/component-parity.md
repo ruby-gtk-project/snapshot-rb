@@ -17,6 +17,17 @@ not done.
 
 ### 1. `gallery.copy` / `gallery.delete` GActions never installed — dead menu items
 
+**Fixed on `ruby` after this report was written.** `lib/gallery.rb#build` now
+inserts a `Gio::SimpleActionGroup` under the `"gallery"` prefix
+(`#action_group`) installing `next`/`previous`/`open`/`copy`/`delete`, so
+`Utils.gallery_item_menu`'s `gallery.copy`/`gallery.delete` menu items
+resolve and fire for real. `test/drive_snapshot.rb` was changed to activate
+`gallery.copy`/`gallery.delete` through `Gtk::Widget#activate_action` (the
+same path a clicked menu item uses) instead of calling the Ruby methods
+directly, closing the "green suite sitting on top of a broken feature" gap
+described below. The rest of this entry is left as originally written, as
+the record of what was found.
+
 - **Upstream**: `src/widgets/gallery.rs:64-73` installs `gallery.copy` and
   `gallery.delete` as widget-level actions via `install_action` /
   `install_action_async`, alongside `gallery.next` / `gallery.previous` /
