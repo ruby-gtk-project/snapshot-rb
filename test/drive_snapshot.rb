@@ -260,6 +260,12 @@ GtkDriver.drive(Snapshot::Application.new, shots: SHOTS) do |d, app|
         info.include?('Library Details') && info.include?('Gtk ') && info.include?('GStreamer ') &&
           !info.include?('Cameras:')
       end
+      d.check('the GStreamer line is gstreamer_pbutils\'s own plugins-base version, not a placeholder') do
+        real_version = "#{GstPbutils::PLUGINS_BASE_VERSION_MAJOR}." \
+          "#{GstPbutils::PLUGINS_BASE_VERSION_MINOR}." \
+          "#{GstPbutils::PLUGINS_BASE_VERSION_MICRO}"
+        Utils.debug_info(cameras: []).include?("GStreamer #{real_version}")
+      end
       d.shot('04-about')
     end
     app.window.visible_dialog&.close
