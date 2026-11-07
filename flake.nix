@@ -28,17 +28,16 @@
           libglycin
           libglycin-gtk4
         ]
-        # The GStreamer stack glycin, gstreamer_pbutils and gstreamer_play
-        # bind: gst-plugins-base carries GstPbutils/GstVideo/GstAudio/GstTag,
-        # gst-plugins-bad carries GstPlay/GstBadAudio, and gstreamer itself is
-        # the Gst/GstBase every one of those typelibs declares as a
-        # dependency. gst-plugins-good ships no typelib of its own but is the
-        # decoder/demuxer plugins GstPlay's playbin3 needs to actually open a
-        # file, so it is on the plugin path below rather than the typelib one.
+        # The GStreamer stack glycin and gstreamer_pbutils bind:
+        # gst-plugins-base carries GstPbutils/GstVideo/GstAudio/GstTag, and
+        # gstreamer itself is the Gst/GstBase that typelib declares as a
+        # dependency. gst-plugins-bad (GstPlay/GstBadAudio) is deliberately
+        # not here: this port's gstreamer_play dependency was removed because
+        # upstream never depends on the gstreamer-play crate or either
+        # namespace — video playback goes through gtk::MediaFile instead.
         ++ (with pkgs.gst_all_1; [
           gstreamer
           gst-plugins-base
-          gst-plugins-bad
         ])
         # The Ruby `pkg-config` gem resolves `Requires.private` transitively and
         # hard-fails if any .pc in the chain is missing, so gtk4's whole private
@@ -109,11 +108,13 @@
         typelibPath = pkgs.lib.makeSearchPath "lib/girepository-1.0"
           (map (drv: drv.out or drv) (gtkStack ++ [ pkgs.at-spi2-core ]));
 
-        # GstPlay::Play.new builds a playbin3 and GstPbutils::Discoverer builds
-        # a uridecodebin; both are fatal (playbin3 even aborts the process) if
-        # the plugin registry can't find them. gst-plugins-good carries no
-        # typelib — it never belongs on typelibPath — but does carry decoders
-        # playbin3 needs, so it is added only here.
+        # gtk::MediaFile (VideoPlayer's playback, backing both the recording
+        # preview and the gallery) is GStreamer-backed on Linux via GTK's own
+        # gtk4 gstreamer media-backend plugin, which needs a working plugin
+        # registry to decode and play the recorded webm/mp4 files; neither
+        # gst-plugins-good nor gst-plugins-bad carries a typelib of its own —
+        # they never belong on typelibPath — so they are added only here, on
+        # the plugin path.
         gstPluginPackages = with pkgs.gst_all_1; [
           gstreamer
           gst-plugins-base

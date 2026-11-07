@@ -17,9 +17,9 @@ require_relative 'camera_controls'
 # bottom bar depending on how much room the window has.
 #
 # Upstream's viewfinder comes from `aperture`, a GStreamer camera pipeline
-# with no Ruby binding; the four gems this port does bind against (glycin,
-# libglycin-gtk4, gstreamer_pbutils, gstreamer_play) are decoders and a
-# playback library, not a device provider, and do not fill that gap. So where
+# with no Ruby binding; the gems this port does bind against (glycin,
+# libglycin-gtk4, gstreamer_pbutils) are decoders and a version-info reader,
+# not a device provider, and do not fill that gap. So where
 # upstream's viewfinder shows a live feed, this port shows the same
 # "No Camera Found" status page Application showed before this file existed
 # — now owned by Camera, alongside the controls that upstream always shows

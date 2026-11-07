@@ -162,17 +162,6 @@
     };
     version = "1.1.0";
   };
-  gstreamer_play = {
-    dependencies = ["gem_kit" "gobject-introspection"];
-    groups = ["default"];
-    platforms = [];
-    source = {
-      remotes = ["https://rubygems.org"];
-      sha256 = "09s50r3yinfsn4q25y5jyjry7x2np4svfi7x6qgsccb9kiln6fni";
-      type = "gem";
-    };
-    version = "1.1.0";
-  };
   gtk4 = {
     dependencies = ["atk" "gdk4" "gsk4"];
     groups = ["default"];

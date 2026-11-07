@@ -12,10 +12,12 @@ require 'adwaita'
 #
 # Upstream decodes through `gtk::MediaFile`, GTK's own playback abstraction —
 # backed by GStreamer on Linux, but exposed through gtk4 itself rather than
-# through a separate GStreamer gem, which is why this file does not need the
-# gstreamer_play binding the gallery's video-aware siblings are not otherwise
-# using. set_file defers to the stream's own file= until the widget is
-# realized, exactly as upstream's realize() does.
+# through a separate GStreamer gem. Upstream never depends on a GstPlay
+# binding either (no `gstreamer-play` crate in its Cargo.toml), which is why
+# the gstreamer_play gem this port once declared had nothing to call and was
+# removed from the gemspec rather than wired in here. set_file defers to the
+# stream's own file= until the widget is realized, exactly as upstream's
+# realize() does.
 class VideoPlayer < Adwaita::Bin
   def initialize
     super()

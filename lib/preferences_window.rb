@@ -18,10 +18,10 @@ require_relative 'settings'
 # The Experimental group is shown only where hardware video encoding works.
 # Upstream asks aperture, which asks GStreamer's registry whether an H.264 or
 # VP8 hardware encoder element exists — a `Gst::ElementFactory.find` lookup.
-# This port does bind GStreamer now (gstreamer_pbutils, gstreamer_play), but
-# neither binds `Gst::ElementFactory`: that lookup belongs to GStreamer core
-# itself, which is the separate `gstreamer` gem, not one of this port's four.
-# So the group still stays hidden rather than guess; the predicate remains a
+# This port does bind GStreamer now (gstreamer_pbutils), but it does not bind
+# `Gst::ElementFactory`: that lookup belongs to GStreamer core itself, which
+# is the separate `gstreamer` gem, not one of this port's bindings. So the
+# group still stays hidden rather than guess; the predicate remains a
 # constructor argument so a camera backend that can answer it can be wired in
 # without changing this file again.
 #

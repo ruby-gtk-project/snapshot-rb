@@ -42,9 +42,6 @@ GEM
     gstreamer_pbutils (1.1.0)
       gem_kit (~> 0.2)
       gobject-introspection (~> 4.3)
-    gstreamer_play (1.1.0)
-      gem_kit (~> 0.2)
-      gobject-introspection (~> 4.3)
     gtk4 (4.4.0)
       atk (= 4.4.0)
       gdk4 (= 4.4.0)
@@ -73,7 +70,6 @@ DEPENDENCIES
   glib2
   glycin
   gstreamer_pbutils
-  gstreamer_play
   gtk4
   libglycin-gtk4
 
