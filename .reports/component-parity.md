@@ -203,3 +203,58 @@ never exercised by any of the 107 checks — the same caveat holds at the new,
 higher number: a bigger passing count from the same stub state is not more
 verified, it is the same unverified surface with two more housekeeping
 checks added on top.
+
+## Round 3 addendum (audited at `d44c0a9`)
+
+Upstream unchanged (`origin/main` still `9d92e7c8`). Four commits landed on
+`ruby` since round 2's audit point: `35ec92b` (dropped the unused
+`gstreamer_play` gem, fixed three stale comments), `de893e1`/`0012667`
+(rewrote `.reports/component-inventory.md` twice, no `lib/`/`exe/` change),
+`d44c0a9` (hardened one drive-script assertion to check
+`GstPbutils::PLUGINS_BASE_VERSION_*` by exact value instead of a substring).
+None touch a widget, CSS class, signal or action. Re-ran the driver:
+
+```
+$ nix develop --command xvfb-run -a ruby test/drive_snapshot.rb
+108 of 108 checks passed
+DRIVE OK
+```
+
+Confirmed real again — 32 scenario groups, 108 checks, one new check over
+round 2 (the `GstPbutils` version-constant assertion `d44c0a9` added).
+
+**New finding this round — which lib files the 108 checks never name at
+all.** Grepping `test/drive_snapshot.rb` for every `lib/*.rb` component's
+class/file name (case-insensitive) turns up **zero** mentions of
+`FlashBin`, `QrBottomSheet`, `CameraRow` or `VideoPlayer` — not the class
+name, not an instance check, not an action activation, nothing:
+
+| File | Mentions in `test/drive_snapshot.rb` |
+|---|---:|
+| `flash_bin.rb` | 0 |
+| `qr_bottom_sheet.rb` | 0 |
+| `camera_row.rb` | 0 |
+| `video_player.rb` | 0 |
+
+This confirms, by direct search rather than by eye, what round 1/2's "Not
+independently verified this round (scanned, not hand-read)" list already
+named as unverified — but it sharpens the claim: these four are not merely
+*unread by the auditor*, they are **unexercised by the only suite that
+executes in this port.** `FlashBin` (the camera overlay flash animation),
+`QrBottomSheet` (the bottom sheet shown in QR-detection mode),
+`CameraRow` (the per-device row in the camera picker — moot today since no
+device list exists, see §3, but still a built, untested widget) and
+`VideoPlayer` (gallery video playback) can each be deleted, broken, or have
+their `initialize` raise, and `108 of 108 checks passed / DRIVE OK` would
+still print. A runtime gate that reports "108 checks … covering 20
+components" without naming which 20 invites exactly this reading — the
+count is real, but at least 4 of the port's 23 `lib/` files have no check
+anywhere in the suite, ported or invented. Per this round's own instruction
+("a component no check exercises is unverified, not done"), these four are
+gaps on the behaviour axis of this skill, independent of and in addition to
+the camera/aperture gap in §3.
+
+Everything else in this file — §1 (closed), §2 (shutter sound, still open),
+§3 (live camera/aperture, still open), the `gallery_button.rb` animation
+discrepancy (still unresolved) — re-checked against the current tree and
+unchanged.

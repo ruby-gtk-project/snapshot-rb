@@ -108,3 +108,46 @@ out by file in `component-parity.md`; headline ones:
 - `data/resources/resources.gresource.xml.in` — icons, the shutter sound,
   `.ui` files; the port's substitute is inlined Ruby assets/CSS, not audited
   file-by-file here beyond the shutter sound above.
+
+## Round 3 addendum (audited at `d44c0a9`)
+
+This file's header still pins itself at `81c790d` and has not been touched
+since. Four commits landed on `ruby` between `81c790d` and the current head
+(`d44c0a9`) that bear directly on claims made above — most importantly
+**the `gallery.copy`/`gallery.delete` gap this document still reports as
+open, in the "headline" bullet list, is closed.** `db21b8b` ("Install
+gallery.copy/gallery.delete GActions so the context menu works") landed
+*before* `component-parity.md`'s round-2 addendum was even written, and
+`lib/gallery.rb:220-232` now builds a `Gio::SimpleActionGroup` under the
+`gallery` prefix with all five actions
+(`next`/`previous`/`open`/`copy`/`delete`), inserted on the root widget —
+confirmed by reading the file directly, not by re-running a scan. This
+document's own bullet ("`gallery.copy` and `gallery.delete` are never
+installed as actions anywhere in the port") is therefore **false as of
+every commit after `db21b8b`**, i.e. false for the entire period this round
+audits, and has been sitting uncorrected in a committed report through two
+more "Parity reports" commits since. `component-parity.md`'s own round-2
+addendum already states the fix is in; this file simply was never brought
+back into agreement with it. This is Finding 1/Finding 6's exact shape
+(a stale per-topic report, uncorrected, contradicting a sibling report on
+the same question) recurring a third time — see
+`accountability-ensurance.md` round 3.
+
+Everything else checked this round against the current tree still holds:
+the live-camera/aperture gap, the unwired shutter-sound preference, and the
+unresolved `gallery_button.rb` animation-count discrepancy are all
+unchanged by the four intervening commits (`35ec92b` dropped the unused
+`gstreamer_play` gem and fixed stale comments in three files;
+`de893e1`/`0012667` only touched `.reports/component-inventory.md`;
+`d44c0a9` only tightened one drive-script assertion). The one substantive
+code change in the whole `81c790d..HEAD` range is the `gallery.rb` action
+group itself (`db21b8b`, +50/-3 lines — confirmed with
+`git diff --stat 81c790d..HEAD -- lib/ exe/`); `camera.rb`,
+`preferences_window.rb` and `video_player.rb` changed only in their header
+comments (the `gstreamer_play` cleanup), and `lib/snapshot/rb.rb` (+8, from
+`c85dfed`) is a load-path shim with no widget/CSS/signal/action content. No
+other widget, CSS class, signal or action was added or removed.
+
+**Correction, superseding the bullet above**: `gallery.rs` → `lib/gallery.rb`
+installs all five of upstream's widget actions
+(`gallery.next/previous/open/copy/delete`); this axis has parity.

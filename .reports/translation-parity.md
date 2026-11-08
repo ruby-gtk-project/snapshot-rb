@@ -95,3 +95,28 @@ the driver never switches locale, so a 107/107 green run and 0/102
 translation keys coexist without contradiction, which is exactly why this
 ledger has to be read on its own and not inferred from the drive script's
 pass count.
+
+## Round 3 addendum (audited at `d44c0a9`)
+
+Re-ran every census command from the top of this report against the
+current tree. Upstream unchanged (`origin/main` @ `9d92e7c8`, still 102
+keys / 56 languages). Port side, re-confirmed from scratch rather than
+assumed carried-forward:
+
+```sh
+grep -rEn "(^|[^a-zA-Z0-9_])_\(['\"]" lib/ exe/     # no matches
+grep -n gettext Gemfile snapshot-rb.gemspec          # no matches
+find . -iname po -o -iname '*.po' -o -iname LINGUAS  # no matches
+```
+
+Still zero on every count. The four commits since round 2
+(`35ec92b`, `de893e1`, `0012667`, `d44c0a9`) touch gem dependencies, two
+`.reports/` documents and one drive-script assertion — none add a user-
+visible string, a gettext call, or catalogue infrastructure of any kind.
+**Unchanged: 0 of 102 keys, 0 of 56 languages.** This remains the single
+largest gap in the port, now spanning three audit rounds with no commit
+anywhere on `ruby` attempting to close any part of it (no `gettext`
+dependency added, no marker introduced, no `po/` directory created). The
+runtime gate grew to 108/108 in the same period without exercising
+translation at all, for the same reason round 2 already gave: the driver
+never switches locale and has no mechanism that could.

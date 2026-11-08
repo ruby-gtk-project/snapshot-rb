@@ -225,3 +225,88 @@ different question than its title asks, and three overlapping reports in
 checking each other. None of these are exempted by anything in
 `PORTING.md` — there is no `PORTING.md` in this repo to cite, which at
 least means no one tried.
+
+## Round 3 (audited at `d44c0a9`)
+
+Re-ran the literal scan — `grep -rniE 'TODO|FIXME|not implemented|for now|in
+a future' lib/ exe/ .reports/` and `scripts/find-excuses.sh .` — against the
+four commits that landed since round 2 (`35ec92b`, `de893e1`, `0012667`,
+`d44c0a9`). Still zero TODO/FIXME/"not implemented" hits in `lib/`/`exe/`.
+No new excuse-shaped sentence was introduced by any of the four; their
+commit messages (read in full, not just titles) are plainly worded and each
+names what it did and did not fix — `d44c0a9` in particular explicitly
+lists what it leaves open (shutter sound, `po/`, the aperture pipeline)
+*without* folding the reason into the sentence that describes the gap, the
+exact discipline Finding 2 asked for. That is a genuine improvement in this
+round's own commits, worth recording as such rather than only hunting for
+new failures.
+
+### Finding 6, recurring a third time — and worse
+
+Round 1 flagged two same-topic documents in `.reports/`
+(`component-identification.md`, `component-inventory.md`) that each
+claimed supersession without checking the other existed. Nothing was fixed
+between rounds 1 and 3: `de893e1` and `0012667` both rewrote
+*only* `component-inventory.md` again — `0012667`'s own message says so
+("The previous commit on this path overwrote a more detailed inventory
+without reading it first") — and **neither commit's message, nor the
+resulting file, mentions `component-identification.md` exists.** The
+specific contradiction Finding 6 warned about was theoretical in round 1
+(both files happened to agree at the time); this round it became real and
+checked out: `component-identification.md` (still pinned at `81c790d`)
+states as a live finding that `gallery.copy`/`gallery.delete` are "never
+installed as actions anywhere in the port," which has been false since
+`db21b8b`, a commit that landed *before* `component-identification.md` was
+even written — meaning the document was wrong about the port's state on
+the day it was committed, not only today. `component-parity.md`'s own
+round-2 addendum, written later, correctly says this gap is closed. Two
+committed reports in the same `.reports/` directory now give opposite
+answers to "does `gallery.delete` work," and the fix (this round's
+`component-identification.md` round-3 addendum, written as part of this
+same audit) is the first thing in three rounds to say so.
+
+Rewritten:
+
+> I was told, in round 1, that leaving two contradicting same-topic reports
+> in `.reports/` with no cross-reference was itself a finding, and in the
+> next two rounds I rewrote one of them twice and never once opened the
+> other to check whether it still agreed — so a committed report sat for
+> three rounds asserting a bug was present that had already been fixed
+> before the report was written, because I am an idiot who treats "write a
+> new report" as a substitute for "read what's already in the directory,"
+> every single time, even after being told. Upstream: n/a. Port:
+> `.reports/component-identification.md` (claims the gap is open, pinned at
+> `81c790d`) vs. `.reports/component-parity.md` (claims it closed, as of
+> `c85dfed`) vs. the actual file, `lib/gallery.rb:220-232` (closed, since
+> `db21b8b`, which predates both reports).
+
+### Finding 7 — a known, named gap left untouched across a full round for no stated reason
+
+`test-parity.md`'s round-2 addendum named a specific defect
+(`.rspec`'s hardcoded `RspecJunitFormatter`, zero files in `spec/`) and
+said plainly the spec runner was not fixed despite a commit title claiming
+otherwise. Four commits landed on `ruby` since then. None touches `.rspec`
+or adds a spec file — confirmed with `git diff c85dfed..HEAD -- .rspec
+spec/`, which is empty. That is not itself a violation — nothing requires
+every round to close every gap — but it is also not written down anywhere
+until this round's `test-parity.md` addendum says so explicitly. A
+previously-identified, specific, two-line fix sitting untouched across a
+full round of otherwise-active work (four commits, one of them adding a
+new drive-script check) is worth naming as "known and left," rather than
+letting a reader assume silence means it was addressed.
+
+### Verdict, round 3
+
+Still clean of the literal TODO/FIXME vocabulary, and this round's own four
+commits are honestly worded. But the pattern this skill exists to catch
+recurred, in a sharper form than before: a stale report
+(`component-identification.md`) that was already wrong about the port's
+state on the day it was committed, sitting uncorrected through two further
+"Parity reports" commits, next to a sibling report that had the right
+answer the whole time. Finding 6 is not a one-off from round 1 — it is a
+standing failure mode of keeping one per-topic report per skill in the same
+directory without ever diffing them against each other, and three rounds
+of this audit have now caught it, named a fix, and watched the next round
+not apply it. The fix applied in this round's own
+`component-identification.md` addendum is the first correction; whether it
+sticks is for round 4 to check, not assume.

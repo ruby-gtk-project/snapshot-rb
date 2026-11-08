@@ -146,3 +146,53 @@ evidence for the wrong command — this is exactly the "false green" shape
 
 Test parity remains **0/3**, now compounded by a fix commit whose own
 named claim does not hold up.
+
+## Round 3 addendum (audited at `d44c0a9`)
+
+Upstream unchanged: still 3 `#[test]`s, all in `aperture/src/utils.rs`, none
+with a Ruby counterpart — the port still has no Ruby object representing
+the camera-caps pipeline these three tests pin, so the gap is unchanged and
+for the same reason.
+
+Re-ran both commands this round:
+
+```
+$ nix develop --command xvfb-run -a ruby test/drive_snapshot.rb
+108 of 108 checks passed
+DRIVE OK
+
+$ nix develop --command rspec
+...
+uninitialized constant RspecJunitFormatter (NameError)
+...
+No examples found.
+```
+
+**The spec runner is still not fixed, two rounds after `c85dfed` claimed
+to fix it and this ledger's round-2 addendum said so was not true.** `.rspec`
+still hardcodes `--format RspecJunitFormatter` at the line this report
+already named; `spec/` still holds zero `*_spec.rb` files. Four commits
+landed on `ruby` since round 2 and none of them touch `.rspec` or add a
+single spec file — the known, written-down defect was left exactly as
+found. That is not a new failure to build; it is a known gap that nothing
+in this round's four commits attempted to close, which is worth saying
+plainly rather than silently re-confirming without comment: a gap flagged
+in a committed report and left untouched for two more rounds is still an
+open gap, not a quieter one.
+
+The drive script's own count grew by one (`107→108`): `d44c0a9` added a
+check that `GstPbutils::PLUGINS_BASE_VERSION_{MAJOR,MINOR,MICRO}` backs the
+"GStreamer <version>" line in the debug-info dump with real values rather
+than a placeholder. This is a genuine, narrow strengthening of an existing
+check (closing a hole `test-parity.md` had not previously flagged — the old
+check would have passed even if the version constants were unresolved), not
+a new ported test and not movement on the 0/3 upstream-test count.
+
+Test parity remains **0/3**. Runtime gate: **108/108**, still the only
+suite that has ever executed in this port, and — per the new finding in
+`component-parity.md` round 3 — still not a check on every `lib/` file
+(`flash_bin.rb`, `qr_bottom_sheet.rb`, `camera_row.rb`, `video_player.rb`
+have zero mentions in it). A suite that passes 108/108 while never naming
+four of the port's 23 components, and while the project's only other test
+framework still cannot load a single example, is a narrow runtime gate
+dressed in a wide-sounding number.
