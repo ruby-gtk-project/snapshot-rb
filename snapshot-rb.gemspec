@@ -114,6 +114,12 @@ Gem::Specification.new do |spec|
   spec.add_dependency("libglycin-gtk4", "~> 1.0")
   spec.add_dependency("gstreamer_pbutils", "~> 1.1")
 
+  # Translation. Upstream's po/ domain is "snapshot" (meson.project_name());
+  # this gem is what loads its .mo files and provides the _()/n_() markers
+  # the strings in lib/ are wrapped in. See po/ and
+  # .reports/translation-parity.md.
+  spec.add_dependency("gettext", "~> 3.4")
+
   # NOTE: It is preferable to list development dependencies in the gemspec due to increased
   #       visibility and discoverability.
   #       However, development dependencies in gemspec will install on

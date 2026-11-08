@@ -2,6 +2,8 @@
 
 require 'adwaita'
 
+require_relative 'i18n'
+
 # QrBottomSheet is what the camera raises when the viewfinder decodes a code, a
 # port of src/widgets/qr_bottom_sheet.rs and
 # data/resources/ui/qr_bottom_sheet.ui: a bin holding a "Code Detected"
@@ -15,6 +17,8 @@ require 'adwaita'
 # sheet does not need to know what kind of root it is under.
 #
 class QrBottomSheet
+  include Snapshot::I18n
+
   URL_SCHEMES = %w[https:// http://].freeze
 
   def initialize(on_toast: nil)
@@ -57,7 +61,7 @@ class QrBottomSheet
 
   def group
     @group ||= Adwaita::PreferencesGroup.new.tap do |preferences|
-      preferences.title = 'Code Detected'
+      preferences.title = _('Code Detected')
       preferences.margin_start = 12
       preferences.margin_end = 12
       preferences.margin_top = 36
@@ -67,7 +71,7 @@ class QrBottomSheet
 
   def action_row
     @action_row ||= Adwaita::ActionRow.new.tap do |row|
-      row.title = 'Contents'
+      row.title = _('Contents')
       row.use_markup = false
       row.add_css_class('property')
     end
@@ -77,7 +81,7 @@ class QrBottomSheet
     @copy_button ||= Gtk::Button.new.tap do |button|
       button.valign = :center
       button.icon_name = 'edit-copy-symbolic'
-      button.tooltip_text = 'Copy to Clipboard'
+      button.tooltip_text = _('Copy to Clipboard')
       button.action_name = 'qr-bottom-sheet.copy'
       button.add_css_class('flat')
     end
@@ -88,7 +92,7 @@ class QrBottomSheet
       button.valign = :center
       button.visible = false
       button.icon_name = 'external-link-symbolic'
-      button.tooltip_text = 'Open Link'
+      button.tooltip_text = _('Open Link')
       button.action_name = 'qr-bottom-sheet.open-external'
       button.add_css_class('flat')
     end
@@ -119,7 +123,7 @@ class QrBottomSheet
       @contents.then do |text|
         if text
           bin.clipboard.set(text)
-          @on_toast&.call('Copied to clipboard')
+          @on_toast&.call(_('Copied to clipboard'))
         end
       end
     end

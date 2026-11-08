@@ -6,5 +6,3 @@
 --warnings
 --format html
 --out results/test_results.html
---format RspecJunitFormatter
---out results/test_results.xml

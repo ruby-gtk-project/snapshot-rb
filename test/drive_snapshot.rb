@@ -122,11 +122,59 @@ GtkDriver.drive(Snapshot::Application.new, shots: SHOTS) do |d, app|
     d.check('and the setting followed') { !app.settings.show_composition_guidelines? }
   end
 
+  d.step('the flash overlay plays and reports its own animation state') do
+    flash_bin = app.window.send(:camera).send(:flash_bin)
+
+    d.check('it is not flashing before being told to') { !flash_bin.flashing? }
+    flash_bin.flash
+    d.check('flash started the animation') { flash_bin.flashing? }
+    pump(300)
+    d.check('the animation finished on its own') { !flash_bin.flashing? }
+  end
+
+  d.step('the QR bottom sheet fills in its row and reacts to URL content') do
+    sheet = app.window.send(:camera).send(:qr_bottom_sheet)
+
+    sheet.contents = 'just some text'
+    d.check('the subtitle took the plain text') { sheet.send(:action_row).subtitle == 'just some text' }
+    d.check('the open-link button is hidden for non-URL contents') { !sheet.send(:open_external_button).visible? }
+    d.check('url? is false for plain text') { !sheet.url? }
+
+    sheet.contents = 'https://example.com/code'
+    d.check('the subtitle took the URL') { sheet.send(:action_row).subtitle == 'https://example.com/code' }
+    d.check('the open-link button appears for URL contents') { sheet.send(:open_external_button).visible? }
+    d.check('url? is true for an https URL') { sheet.url? }
+
+    copied = []
+    sheet.send(:bin).clipboard.define_singleton_method(:set) { |text| copied << text }
+    sheet.send(:bin).activate_action('qr-bottom-sheet.copy', nil)
+    d.check('the copy GAction is reachable and copies the current contents') do
+      copied == ['https://example.com/code']
+    end
+  end
+
   d.step('taking a picture with no camera refuses with upstream\'s toast') do
     toasts.clear
     app.window.window.lookup_action('take-picture').activate(nil)
     d.check('the toast is the no-camera one') { toasts == ['Could not take picture'] }
     d.check('no recording is active') { !app.window.send(:camera).is_recording_active? }
+  end
+
+  d.step('German actually reaches the screen, not just the catalogue (translation-parity skill, step 5)') do
+    original_locale = GetText.locale
+    GetText.locale = 'de'
+
+    toasts.clear
+    app.window.window.lookup_action('take-picture').activate(nil)
+    d.check('the no-camera toast comes back in German') { toasts == ['Bild konnte nicht aufgenommen werden'] }
+
+    shutter = app.window.send(:camera).send(:camera_controls).send(:shutter_button)
+    shutter.shutter_mode = Enums::ShutterMode::VIDEO
+    d.check('the shutter tooltip translates too') { shutter.build.tooltip_text == 'Aufnahme starten' }
+    shutter.shutter_mode = Enums::ShutterMode::PICTURE
+
+    GetText.locale = original_locale
+    toasts.clear
   end
 
   d.step('a countdown delays the shutter instead of firing it immediately') do
@@ -186,6 +234,27 @@ GtkDriver.drive(Snapshot::Application.new, shots: SHOTS) do |d, app|
     d.check('switching back shows the shutter again') { controls.send(:shutter_button).button.visible? }
     d.check('and the gallery stack again') { controls.send(:gallery_button_stack).visible? }
     d.check('the layout is default again') { controls.layout == Enums::ControlsLayout::DEFAULT }
+  end
+
+  d.step('a CameraRow tracks its camera and the selection checkmark through the registry') do
+    row = CameraRow.new
+    built = row.build
+
+    d.check('the row registered itself against the box it built') { CameraRow.for(built).equal?(row) }
+
+    fake_camera = Struct.new(:display_name).new('Integrated Camera')
+    row.item = fake_camera
+    d.check('the label took the camera\'s display name') { row.send(:label).label == 'Integrated Camera' }
+    d.check('item reads back the same camera') { row.item.equal?(fake_camera) }
+
+    d.check('the checkmark starts hidden') { !row.selected? }
+    row.selected = true
+    d.check('selecting shows the checkmark') { row.selected? }
+    row.selected = false
+    d.check('deselecting hides it again') { !row.selected? }
+
+    CameraRow.unregister(built)
+    d.check('unregistering drops it from the registry') { CameraRow.for(built).nil? }
   end
 
   d.step('the camera controls orientation setter updates its own margins') do
@@ -254,7 +323,14 @@ GtkDriver.drive(Snapshot::Application.new, shots: SHOTS) do |d, app|
       d.check('its license is GPL-3.0') { dialog.license_type == :gpl_3_0 }
       d.check('its website is upstream\'s') { dialog.website == AboutDialog::WEBSITE }
       d.check('its developer name is upstream\'s') { dialog.developer_name == AboutDialog::DEVELOPER_NAME }
-      d.check('translator credits are the translatable msgid') { dialog.translator_credits == 'translator-credits' }
+      # Now that gettext is wired (see lib/i18n.rb), this resolves through
+      # the real catalogue for whatever locale built the dialog — which, in
+      # this environment, is a real en_GB credits line, not the bare
+      # "translator-credits" marker a from-scratch, untranslated build would
+      # show. Either is correct; what matters is that it is never empty.
+      d.check('translator credits resolve to something, not an empty string') do
+        !dialog.translator_credits.to_s.empty?
+      end
       d.check('debug info names the libraries, with no camera section') do
         info = Utils.debug_info(cameras: [])
         info.include?('Library Details') && info.include?('Gtk ') && info.include?('GStreamer ') &&
@@ -419,6 +495,16 @@ GtkDriver.drive(Snapshot::Application.new, shots: SHOTS) do |d, app|
     d.check('the gallery still accepted it') { gallery.items.length == 2 }
     d.check('it is marked loaded even with nothing to decode') { item.loaded? }
     d.check('no thumbnail, but no crash either') { item.thumbnail.nil? }
+
+    player = item.send(:video_player)
+    d.check('GalleryVideo built a real VideoPlayer') { player.is_a?(VideoPlayer) }
+    d.check('stream exposes the underlying Gtk::MediaFile') { player.stream.is_a?(Gtk::MediaFile) }
+    d.check('pausing an unrealized, unparented player does not raise') do
+      player.pause
+      true
+    rescue StandardError
+      false
+    end
   end
 
   d.step('opening the gallery now jumps straight to the newest item') do

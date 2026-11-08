@@ -10,6 +10,7 @@ require_relative 'about_dialog'
 require_relative 'preferences_window'
 require_relative 'utils'
 require_relative 'snapshot/rb/version'
+require_relative 'i18n'
 
 # Window is the app's main window, a port of src/widgets/window.rs and
 # data/resources/ui/window.ui: an Adwaita::ApplicationWindow holding a toast
@@ -23,6 +24,8 @@ require_relative 'snapshot/rb/version'
 # how to apply/remember. Application keeps only the actions that do not need
 # a camera or a gallery (quit, shortcuts) and the app-wide setup.
 class Window
+  include Snapshot::I18n
+
   def initialize(app, settings:)
     @app = app
     @settings = settings
@@ -95,7 +98,7 @@ class Window
   # class — Application's shortcuts action, and PreferencesWindow/AboutDialog
   # below — that needs a parent to present a dialog against.
   def window
-    @window ||= Adwaita::ApplicationWindow.new(@app).tap { |win| win.title = 'Camera' }
+    @window ||= Adwaita::ApplicationWindow.new(@app).tap { |win| win.title = _('Camera') }
   end
 
   private
@@ -106,16 +109,16 @@ class Window
 
     def navigation_view = @navigation_view ||= Adwaita::NavigationView.new
 
-    def camera_page = @camera_page ||= Adwaita::NavigationPage.new(camera.build, 'Camera')
+    def camera_page = @camera_page ||= Adwaita::NavigationPage.new(camera.build, _('Camera'))
 
-    def gallery_page = @gallery_page ||= Adwaita::NavigationPage.new(gallery.build, 'Gallery')
+    def gallery_page = @gallery_page ||= Adwaita::NavigationPage.new(gallery.build, _('Gallery'))
 
     def camera
       @camera ||= Camera.new(settings: @settings, on_toast: ->(text) { send_toast(text) })
     end
 
     def gallery
-      @gallery ||= Gallery.new.tap do |g|
+      @gallery ||= Gallery.new(on_toast: ->(text) { send_toast(text) }).tap do |g|
         g.connect_item_added { |_, _item| window.lookup_action('toggle-gallery').enabled = true }
         g.connect_item_removed do |_, _is_last|
           if g.items.empty?

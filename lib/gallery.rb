@@ -6,6 +6,7 @@ require_relative 'utils'
 require_relative 'sliding_view'
 require_relative 'gallery_picture'
 require_relative 'gallery_video'
+require_relative 'i18n'
 
 # Gallery is the full-screen view of everything the camera has captured, a
 # port of src/widgets/gallery.rs and data/resources/ui/gallery.ui: a
@@ -23,12 +24,15 @@ require_relative 'gallery_video'
 # reads user-dirs.dirs and writes pictures out — nothing here needs gio's
 # enumerator for what is, underneath, a `Dir.children` and a `File.stat`.
 class Gallery
+  include Snapshot::I18n
+
   ATTRIBUTES_GLOB = '*'
 
-  def initialize
+  def initialize(on_toast: nil)
     @current_item = nil
     @on_item_added = []
     @on_item_removed = []
+    @on_toast = on_toast
   end
 
   def build
@@ -114,6 +118,7 @@ class Gallery
     return false unless item
 
     clipboard.set(item.file)
+    @on_toast&.call(_('Copied to clipboard'))
     true
   end
 
@@ -124,10 +129,12 @@ class Gallery
     return nil unless item
 
     is_last = sliding_view.pages.first == item
+    was_picture = item.is_picture?
     sliding_view.remove(item)
     item.file.delete
     load_neighbor_pages
     @on_item_removed.each { |block| block.call(self, is_last) }
+    @on_toast&.call(was_picture ? _('Picture deleted') : _('Video deleted'))
     item
   end
 
@@ -161,7 +168,8 @@ class Gallery
       current = sliding_view.current_page
       return unless current
 
-      open_external_button.tooltip_text = current.is_picture? ? 'Open in Image Viewer' : 'Open in Video Player'
+      open_external_button.tooltip_text =
+        current.is_picture? ? _('Open in Image Viewer') : _('Open in Video Player')
       menu_button.menu_model = Utils.gallery_item_menu(current.is_picture?)
     end
 
@@ -276,7 +284,7 @@ class Gallery
     def menu_button
       @menu_button ||= Gtk::MenuButton.new.tap do |button|
         button.icon_name = 'view-more-symbolic'
-        button.tooltip_text = 'Gallery Menu'
+        button.tooltip_text = _('Gallery Menu')
         button.add_css_class('flat')
         button.add_css_class('circular')
       end
@@ -287,7 +295,7 @@ class Gallery
     def prev_button
       @prev_button ||= Gtk::Button.new.tap do |button|
         button.icon_name = 'go-previous-symbolic'
-        button.tooltip_text = 'Previous Image'
+        button.tooltip_text = _('Previous Image')
         button.valign = :center
         button.sensitive = false
         button.add_css_class('osd')
@@ -300,7 +308,7 @@ class Gallery
     def next_button
       @next_button ||= Gtk::Button.new.tap do |button|
         button.icon_name = 'go-next-symbolic'
-        button.tooltip_text = 'Next Image'
+        button.tooltip_text = _('Next Image')
         button.valign = :center
         button.sensitive = false
         button.add_css_class('osd')
@@ -313,7 +321,7 @@ class Gallery
     def open_external_button
       @open_external_button ||= Gtk::Button.new.tap do |button|
         button.icon_name = 'external-link-symbolic'
-        button.tooltip_text = 'Open in Image Viewer'
+        button.tooltip_text = _('Open in Image Viewer')
         button.valign = :center
         button.add_css_class('osd')
         button.add_css_class('gallerycontrols')

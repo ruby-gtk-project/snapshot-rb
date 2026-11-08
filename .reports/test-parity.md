@@ -196,3 +196,37 @@ have zero mentions in it). A suite that passes 108/108 while never naming
 four of the port's 23 components, and while the project's only other test
 framework still cannot load a single example, is a narrow runtime gate
 dressed in a wide-sounding number.
+
+## Round 4 addendum (this round)
+
+Both of this round's named gaps are closed, checked rather than assumed:
+
+- **The spec runner now runs.** `.rspec`'s two `RspecJunitFormatter` lines
+  are gone (nothing else in `.rspec` depended on them), and
+  `spec/aperture_utils_spec.rb` is a real, non-empty spec file. Verified by
+  actually running it the way the dev shell's own banner says to:
+  `ruby -e 'require "rspec/core"; exit RSpec::Core::Runner.run(["--format",
+  "progress", "--require", "spec_helper", "spec"])'` → `7 examples, 0
+  failures`. `bundle exec rspec` itself still does not work in this sandbox
+  — not because of `.rspec` or missing spec files, but because the root
+  `Gemfile`'s dependency closure (`kettle-test`, etc.) has never been
+  `bundle install`ed here and rspec is not declared in it directly; that is
+  a pre-existing, separate gap from the one this round's task named, and is
+  not claimed fixed.
+- **Test parity moved off 0/3.** `aperture/src/utils.rs`'s three `#[cfg(test)]`
+  functions (`test_is_infrared`, `test_limit_fps`, `test_best_height`) are
+  ported to `ApertureUtils` (`lib/aperture_utils.rb`) and
+  `spec/aperture_utils_spec.rb`, using the `Gst-1.0` typelib loaded directly
+  through `gobject-introspection` (the same mechanism `gstreamer_pbutils`'s
+  own loader uses to call `gst_init_check` — there is still no packaged
+  Ruby gem for core `Gst`, so this is the one legitimate way to get
+  `Gst::Caps` without hand-rolling caps parsing). All three pass against
+  real `Gst::Caps` objects, not mocks: **test parity 3/3** on the one slice
+  of `aperture` that is pure caps arithmetic rather than a device pipeline.
+  The rest of `aperture` (camera, viewfinder, device provider, code
+  detector) remains untested because it remains unported — no change there.
+
+Runtime gate grew to **130/130** (two new drive-script scenarios: a real
+German-locale check per `translation-parity.md` round 4, and the
+`CameraRow`/`VideoPlayer`/`FlashBin`/`QrBottomSheet` coverage below), and
+spec count grew to **7/7** passing. Neither suite regressed the other.

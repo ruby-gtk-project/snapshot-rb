@@ -50,3 +50,8 @@ Appraisal.*.gemfile.lock
 # nix/ is the runtime gemdir for flake.nix: bundlerEnv needs its lock and
 # gemset committed or the app cannot be built reproducibly.
 !nix/Gemfile.lock
+
+# Generated .mo catalogues (rake gettext:mo:update); po/ is the source of truth.
+/locale/
+# GetText::Tools::Task's own per-locale timestamp directories under po/.
+/po/*/

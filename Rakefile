@@ -58,6 +58,35 @@
 require "bundler/gem_tasks" if !Dir[File.join(__dir__, "*.gemspec")].empty?
 # simplecov:enable
 
+# kettle-jem:freeze
+# Translation build: compiles po/*.po — imported from upstream unchanged,
+# one file per language in GNOME's own flat `po/<lang>.po` layout — into
+# `locale/<lang>/LC_MESSAGES/snapshot.mo`, which is where lib/i18n.rb's
+# LOCALE_DIR points.
+#
+# This does NOT use `GetText::Tools::Task`: that helper's `Path` assumes the
+# gem's own nested layout, `po/<lang>/<domain>.po`, and its po:update step
+# would `rmsgmerge`/`rmsginit` a *new* po/<lang>/snapshot.po from scratch,
+# discarding every donated translation in the flat file next to it (found by
+# running it once — the resulting .mo had every key but no translated
+# values). msgfmt is run directly over the files upstream's translators
+# actually filled in, and nothing here ever writes into po/.
+desc "Compile po/*.po into locale/<lang>/LC_MESSAGES/snapshot.mo"
+task "gettext:mo" do
+  require "gettext/tools/msgfmt"
+
+  linguas = File.exist?("po/LINGUAS") ? File.read("po/LINGUAS").split : []
+  linguas.each do |locale|
+    po_file = "po/#{locale}.po"
+    next unless File.exist?(po_file)
+
+    mo_dir = "locale/#{locale}/LC_MESSAGES"
+    mkdir_p(mo_dir)
+    GetText::Tools::MsgFmt.run(po_file, "--output", "#{mo_dir}/snapshot.mo")
+  end
+end
+# kettle-jem:unfreeze
+
 # Define a base default task early so other files can enhance it.
 desc "Default tasks aggregator"
 task :default do

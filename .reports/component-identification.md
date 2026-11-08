@@ -151,3 +151,20 @@ other widget, CSS class, signal or action was added or removed.
 **Correction, superseding the bullet above**: `gallery.rs` → `lib/gallery.rb`
 installs all five of upstream's widget actions
 (`gallery.next/previous/open/copy/delete`); this axis has parity.
+
+## Round 4 note (this round, audited at `f4cdd9e` before this round's commits)
+
+Checked whether the round 3 correction above still agrees with
+`component-parity.md` before touching either file again, per
+`accountability-ensurance.md`'s round-3 instruction to diff same-topic
+reports against each other rather than only against each file's own prior
+version. It does: `component-parity.md`'s own "Finding 1" section (top of
+that file) independently confirms `gallery.copy`/`gallery.delete` fixed,
+verified by its own drive-script assertion, and both documents have agreed
+since `db21b8b`. Nothing to correct here this round. Also added this round:
+`Gallery#copy`/`#delete` now send the toast upstream's
+`gallery.rs:420,461,463` sends (`"Copied to clipboard"` /
+`"Picture deleted"` / `"Video deleted"`) — a real behavioural gap this
+document never listed, found while wiring translation (see
+`translation-parity.md` round 4) rather than while auditing components, and
+named here so it is not re-discovered as "new" next round.

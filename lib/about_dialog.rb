@@ -3,6 +3,7 @@
 require 'adwaita'
 
 require_relative 'utils'
+require_relative 'i18n'
 
 # AboutDialog is the dialog behind win.about, ported from
 # Window::show_about_dialog in upstream's src/widgets/window.rs together with
@@ -18,10 +19,13 @@ require_relative 'utils'
 # adds them.
 #
 class AboutDialog < Adwaita::AboutDialog
-  APPLICATION_NAME = 'Camera'
+  include Snapshot::I18n
+  Snapshot::I18n.bind(self)
+
+  APPLICATION_NAME = N_('Camera')
   APPLICATION_ICON = 'org.gnome.Snapshot'
-  DEVELOPER_NAME = 'The GNOME Project'
-  COMMENTS = 'Take pictures and videos on your computer, tablet, or phone.'
+  DEVELOPER_NAME = N_('The GNOME Project')
+  COMMENTS = N_('Take pictures and videos on your computer, tablet, or phone.')
   COPYRIGHT = '© 2023 The GNOME Project'
 
   WEBSITE = 'https://apps.gnome.org/Snapshot/'
@@ -51,10 +55,10 @@ class AboutDialog < Adwaita::AboutDialog
 
   def build
     tap do |dialog|
-      dialog.application_name = APPLICATION_NAME
+      dialog.application_name = _(APPLICATION_NAME)
       dialog.application_icon = APPLICATION_ICON
-      dialog.developer_name = DEVELOPER_NAME
-      dialog.comments = COMMENTS
+      dialog.developer_name = _(DEVELOPER_NAME)
+      dialog.comments = _(COMMENTS)
       dialog.copyright = COPYRIGHT
       dialog.license_type = Gtk::License::GPL_3_0
 
@@ -70,7 +74,7 @@ class AboutDialog < Adwaita::AboutDialog
       # Upstream passes the version with any pre-release suffix stripped off.
       dialog.version = @version.to_s.split('-').first
 
-      dialog.translator_credits = 'translator-credits'
+      dialog.translator_credits = _('translator-credits')
       dialog.developers = DEVELOPERS
       dialog.designers = DESIGNERS
       dialog.debug_info = Utils.debug_info(cameras: @cameras)

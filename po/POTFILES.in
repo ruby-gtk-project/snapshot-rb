@@ -1,0 +1,19 @@
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
+#
+# Upstream's POTFILES.in lists .rs/.ui/data files that no longer exist in
+# this port (see data/ note in translation-parity.md: no .desktop, gschema
+# or metainfo file exists here). This lists the Ruby files that actually
+# carry a marker today; add a file here in the same commit that adds its
+# first _()/n_()/p_()/N_() call, not before.
+lib/about_dialog.rb
+lib/camera.rb
+lib/camera_controls.rb
+lib/gallery.rb
+lib/preferences_window.rb
+lib/qr_bottom_sheet.rb
+lib/qr_screen_bin.rb
+lib/shortcuts_dialog.rb
+lib/shutter_button.rb
+lib/utils.rb
+lib/window.rb

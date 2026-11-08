@@ -5,6 +5,7 @@ require 'adwaita'
 require 'gstreamer_pbutils'
 
 require_relative 'enums'
+require_relative 'i18n'
 
 # Utils holds the free functions of upstream's src/utils.rs: the names new
 # pictures and recordings are saved under, the two directories they are saved
@@ -19,6 +20,8 @@ require_relative 'enums'
 # order (environment variable, user-dirs.dirs, English fallback) is the one
 # xdg-user-dir itself uses.
 module Utils
+  Snapshot::I18n.bind(self)
+
   DATE_FORMAT = '%Y-%m-%d %H-%M-%S.%6N'
 
   # The subdirectory of the XDG pictures/videos directories both kinds of
@@ -36,13 +39,13 @@ module Utils
   # "Photo from 2023-05-21 11-05-59.123456.jpeg", or "Photo 12345.jpeg" if the
   # clock cannot be read.
   def self.picture_file_name(picture_format = Enums::PictureFormat.default)
-    "#{timestamped_name('Photo from %<date>s', 'Photo %<number>d')}." \
+    "#{timestamped_name('Photo from {date}', 'Photo {number}')}." \
       "#{Enums::PictureFormat.as_str(picture_format)}"
   end
 
   # "Recording from 2023-05-21 11-05-59.123456.webm", or "Recording 12345.webm".
   def self.video_file_name(video_format = :vp8webm)
-    "#{timestamped_name('Recording from %<date>s', 'Recording %<number>d')}." \
+    "#{timestamped_name('Recording from {date}', 'Recording {number}')}." \
       "#{VIDEO_EXTENSIONS.fetch(video_format, VIDEO_EXTENSIONS.fetch(:vp8webm))}"
   end
 
@@ -108,24 +111,33 @@ module Utils
     Gio::Menu.new.tap do |menu|
       is_picture.then do |picture|
         if picture
-          menu.append('_Copy Picture', 'gallery.copy')
+          menu.append(_('_Copy Picture'), 'gallery.copy')
         else
-          menu.append('_Copy Video', 'gallery.copy')
+          menu.append(_('_Copy Video'), 'gallery.copy')
         end
       end
 
-      menu.append('_Delete', 'gallery.delete')
+      menu.append(_('_Delete'), 'gallery.delete')
       menu.freeze
     end
   end
 
   # Both file-name helpers have the same shape: a timestamp if the clock can be
-  # read, otherwise a random number in the range upstream uses.
+  # read, otherwise a random number in the range upstream uses. `dated` and
+  # `numbered` are upstream's own msgids (`"Photo from {date}"`, `"Photo
+  # {number}"`, ...), with upstream's `{date}`/`{number}` placeholder syntax
+  # (Rust's `formatx!`, not Ruby's `%<name>s`) — substituted by hand rather
+  # than through `Kernel#format`, so the translatable string stays exactly
+  # what upstream's translators were sent.
   def self.timestamped_name(dated, numbered)
-    format(dated, date: Time.now.strftime(DATE_FORMAT))
+    interpolate(_(dated), date: Time.now.strftime(DATE_FORMAT))
   rescue StandardError => e
     warn "Could not read the clock: #{e.message}"
-    format(numbered, number: rand(0...999_999))
+    interpolate(_(numbered), number: rand(0...999_999))
+  end
+
+  def self.interpolate(msgid, **vars)
+    vars.reduce(msgid) { |text, (key, value)| text.gsub("{#{key}}", value.to_s) }
   end
 
   # The XDG directory for a kind of media, with the Camera subdirectory

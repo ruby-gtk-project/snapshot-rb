@@ -6,6 +6,7 @@ require_relative 'enums'
 require_relative 'camera_row'
 require_relative 'shutter_button'
 require_relative 'gallery_button'
+require_relative 'i18n'
 
 # CameraControls is the bottom control row of the camera page — the camera
 # chooser, the shutter and the gallery button — a port of
@@ -18,6 +19,8 @@ require_relative 'gallery_button'
 # for the same reason.
 #
 class CameraControls
+  include Snapshot::I18n
+
   def initialize
     @layout = Enums::ControlsLayout.default
     @on_camera_switched = nil
@@ -129,7 +132,7 @@ class CameraControls
       button.halign = :center
       button.valign = :center
       button.icon_name = 'pick-camera-alt2-symbolic'
-      button.tooltip_text = 'Select Camera'
+      button.tooltip_text = _('Select Camera')
       button.add_css_class('camerabutton')
       button.add_css_class('circular')
     end
@@ -140,7 +143,9 @@ class CameraControls
       button.valign = :center
       button.halign = :center
       button.icon_name = 'cameras-symbolic'
-      button.tooltip_text = 'Switch Camera'
+      # Upstream's tooltip carries a translator context (camera_controls.ui:48):
+      # "Switch between front and back camera button".
+      button.tooltip_text = p_('Switch between front and back camera button', 'Switch Camera')
       button.add_css_class('camerabutton')
       button.add_css_class('circular')
       button.signal_connect('clicked') { @on_camera_switched&.call(self) }

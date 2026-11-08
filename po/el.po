@@ -1,0 +1,484 @@
+# Greek translation for Snapshot.
+# Copyright (C) 2023 Snapshot's COPYRIGHT HOLDER
+# This file is distributed under the same license as the Snapshot package.
+# Efstathios Iosifidis <eiosifidis@gnome.org>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Snapshot main\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/snapshot/-/issues\n"
+"POT-Creation-Date: 2025-10-16 07:46+0000\n"
+"PO-Revision-Date: 2025-10-19 10:55+0300\n"
+"Last-Translator: Efstathios Iosifidis <eiosifidis@gnome.org>\n"
+"Language-Team: Greek <gnome-el-list@gnome.org>\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.7\n"
+
+#: data/org.gnome.Snapshot.desktop.in.in:2
+#: data/resources/org.gnome.Snapshot.metainfo.xml.in.in:7
+#: data/resources/ui/window.ui:4 data/resources/ui/window.ui:11 src/main.rs:24
+msgid "Camera"
+msgstr "Κάμερα"
+
+#: data/org.gnome.Snapshot.desktop.in.in:3
+#: data/resources/org.gnome.Snapshot.metainfo.xml.in.in:8
+msgid "Take pictures and videos"
+msgstr "Λήψη φωτογραφιών και βίντεο"
+
+#. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
+#: data/org.gnome.Snapshot.desktop.in.in:9
+msgid "picture;photos;camera;webcam;snapshot;"
+msgstr "εικόνα;φωτογραφίες;κάμερα;webcam;στιγμιότυπο;"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:14
+#: data/org.gnome.Snapshot.gschema.xml.in:15
+msgid "Default window width"
+msgstr "Προκαθορισμένο πλάτος παραθύρου"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:19
+#: data/org.gnome.Snapshot.gschema.xml.in:20
+msgid "Default window height"
+msgstr "Προκαθορισμένο ύψος παραθύρου"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:24
+msgid "Default window maximized behaviour"
+msgstr "Προεπιλεγμένη συμπεριφορά μεγιστοποιημένου παραθύρου"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:29
+msgid "Play shutter sound"
+msgstr "Αναπαραγωγή ήχου φωτοφράκτη"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:30
+msgid "Whether to play a shutter sound when taking pictures"
+msgstr "Εάν θα αναπαράγεται ήχος φωτοφράκτη κατά την λήψη φωτογραφιών"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:34
+msgid "Show composition guidelines"
+msgstr "Εμφάνιση οδηγιών σύνθεσης"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:35
+msgid "Whether to show composition guidelines when using the camera"
+msgstr "Εάν θα εμφανίζονται οδηγίες σύνθεσης κατά τη χρήση της κάμερας"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:39
+msgid "Enable audio recording"
+msgstr "Ενεργοποίηση εγγραφής ήχου"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:40
+msgid "Whether to record audio when recording video"
+msgstr "Εάν θέλετε να εγγράφετε ήχο κατά την εγγραφή βίντεο"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:44
+msgid "Enable hardware recording"
+msgstr "Ενεργοποίηση εγγραφής με χρήση υλικού"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:45
+msgid "Whether to record video using hardware encoding"
+msgstr "Εάν θα καταγράψετε βίντεο χρησιμοποιώντας κωδικοποίηση υλικού"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:49
+msgid "Countdown timer"
+msgstr "Αντίστροφη μέτρηση"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:50
+msgid "The duration of the countdown for taking photos, in seconds"
+msgstr ""
+"Η διάρκεια της αντίστροφης μέτρησης πριν τη λήψη της φωτογραφίας, σε "
+"δευτερόλεπτα"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:54
+msgid "Capture mode"
+msgstr "Λειτουργία σύλληψης"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:55
+msgid "Whether to take pictures or videos"
+msgstr "Εάν θα λαμβάνονται φωτογραφίες ή βίντεο"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:59
+msgid "Picture format"
+msgstr "Μορφή εικόνας"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:60
+msgid "Whether to save pictures as png or jpeg"
+msgstr "Εάν θα αποθηκεύονται οι εικόνες ως png ή jpeg"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:64
+msgid "Last Camera Used ID"
+msgstr "ID της τελευταίας κάμερας που χρησιμοποιήθηκε"
+
+#: data/org.gnome.Snapshot.gschema.xml.in:65
+msgid "An ID representing the last used camera"
+msgstr "Ένα ID που αντιπροσωπεύει την τελευταία κάμερα που χρησιμοποιήθηκε"
+
+#: data/resources/org.gnome.Snapshot.metainfo.xml.in.in:10
+msgid "Take pictures and videos on your computer, tablet, or phone."
+msgstr ""
+"Λήψη φωτογραφιών και βίντεο στον υπολογιστή σας, το tablet ή το τηλέφωνο."
+
+#: data/resources/org.gnome.Snapshot.metainfo.xml.in.in:17
+msgid "Camera's main interface"
+msgstr "Η κύρια διεπαφή της κάμερας"
+
+#: data/resources/org.gnome.Snapshot.metainfo.xml.in.in:21
+msgid "Camera's gallery viewer"
+msgstr "Προβολή συλλογής κάμερας"
+
+#. developer_name tag deprecated with Appstream 1.0
+#: data/resources/org.gnome.Snapshot.metainfo.xml.in.in:242
+msgid "The GNOME Project"
+msgstr "Το έργο GNOME"
+
+#: data/resources/ui/camera.ui:75 data/resources/ui/camera.ui:139
+#: data/resources/ui/camera.ui:545
+msgid "Main Menu"
+msgstr "Κυρίως μενού"
+
+#: data/resources/ui/camera.ui:84
+msgid "No Camera Found"
+msgstr "Δεν βρέθηκε κάμερα"
+
+#: data/resources/ui/camera.ui:85
+msgid "Connect a camera device"
+msgstr "Σύνδεση συσκευής κάμερας"
+
+#: data/resources/ui/camera.ui:127 data/resources/ui/camera.ui:567
+msgid "Countdown"
+msgstr "Αντίστροφη μέτρηση"
+
+#: data/resources/ui/camera.ui:164
+msgid "Picture Mode"
+msgstr "Λειτουργία εικόνας"
+
+#: data/resources/ui/camera.ui:170
+msgid "Recording Mode"
+msgstr "Λειτουργία εγγραφής"
+
+#: data/resources/ui/camera.ui:177
+msgid "QR Code Scanning Mode"
+msgstr "Λειτουργία σάρωσης κώδικα QR"
+
+#: data/resources/ui/camera.ui:554
+msgid "Missing Camera Permission"
+msgstr "Απουσία άδειας κάμερας"
+
+#: data/resources/ui/camera.ui:555
+msgid "Allow camera usage in Settings"
+msgstr "Επιτρέψτε τη χρήση της κάμερας στις Ρυθμίσεις"
+
+#. TRANSLATORS this indicates the countdown is disabled
+#: data/resources/ui/camera.ui:570
+msgid "None"
+msgstr "Kανένα"
+
+#. TRANSLATORS this is time for a countdown in seconds
+#: data/resources/ui/camera.ui:575
+msgid "3s"
+msgstr "3δ"
+
+#. TRANSLATORS this is time for a countdown in seconds
+#: data/resources/ui/camera.ui:580
+msgid "5s"
+msgstr "5δ"
+
+#. TRANSLATORS this is time for a countdown in seconds
+#: data/resources/ui/camera.ui:585
+msgid "10s"
+msgstr "10δ"
+
+#: data/resources/ui/camera.ui:593
+msgid "_Preferences"
+msgstr "_Προτιμήσεις"
+
+#: data/resources/ui/camera.ui:597
+msgid "_Keyboard Shortcuts"
+msgstr "Συντομεύσεις _πληκτρολογίου"
+
+#: data/resources/ui/camera.ui:601
+msgid "_About Camera"
+msgstr "_Περί εφαρμγής Κάμερα"
+
+#: data/resources/ui/camera_controls.ui:17
+msgid "Open Gallery"
+msgstr "Άνοιγμα συλλογής"
+
+#. Set a fallback tooltip
+#: data/resources/ui/camera_controls.ui:25 src/widgets/shutter_button.rs:71
+#: src/widgets/shutter_button.rs:120
+msgid "Take Picture"
+msgstr "Λήψη φωτογραφίας"
+
+#: data/resources/ui/camera_controls.ui:35
+msgid "Select Camera"
+msgstr "Επιλογή κάμερας"
+
+#: data/resources/ui/camera_controls.ui:48
+msgctxt "Switch between front and back camera button"
+msgid "Switch Camera"
+msgstr "Εναλλαγή κάμερας"
+
+#: data/resources/ui/gallery.ui:24
+msgid "Gallery Menu"
+msgstr "Μενού Συλλογής"
+
+#: data/resources/ui/gallery.ui:53
+msgid "Next Image"
+msgstr "Επόμενη εικόνα"
+
+#: data/resources/ui/gallery.ui:67
+msgid "Previous Image"
+msgstr "Προηγούμενη εικόνα"
+
+#: data/resources/ui/gallery.ui:81 src/widgets/gallery.rs:139
+msgid "Open in Image Viewer"
+msgstr "Άνοιγμα προγράμματος προβολής εικόνων"
+
+#: data/resources/ui/preferences_window.ui:7
+#: data/resources/ui/preferences_window.ui:11
+msgid "General"
+msgstr "Γενικά"
+
+#: data/resources/ui/preferences_window.ui:14
+msgid "_Shutter Sound"
+msgstr "Ήχος _κλείστρου"
+
+#: data/resources/ui/preferences_window.ui:21
+msgid "_Composition Guidelines"
+msgstr "Οδηγίες _σύνθεσης"
+
+#: data/resources/ui/preferences_window.ui:30
+msgid "Video Recording"
+msgstr "Εγγραφή βίντεο"
+
+#: data/resources/ui/preferences_window.ui:33
+msgid "_Record Audio"
+msgstr "_Εγγραφή ήχου"
+
+#: data/resources/ui/preferences_window.ui:42
+msgid "Experimental"
+msgstr "Πειραματικό"
+
+#: data/resources/ui/preferences_window.ui:43
+msgid ""
+"Some graphic drivers may cause the system to be unstable or crash. In these "
+"cases, reboot the system and disable the option."
+msgstr ""
+"Ορισμένοι οδηγοί γραφικών ενδέχεται να προκαλέσουν αστάθεια ή σφάλμα στο "
+"σύστημα. Σε αυτές τις περιπτώσεις, επανεκκινήστε το σύστημα και "
+"απενεργοποιήστε την επιλογή."
+
+#: data/resources/ui/preferences_window.ui:46
+msgid "_Hardware Video Encoding"
+msgstr "Κωδικοποίηση βίντεο με χρήση _υλικού"
+
+#: data/resources/ui/qr_bottom_sheet.ui:10
+msgid "Code Detected"
+msgstr "Ανιχνεύθηκε κώδικας"
+
+#: data/resources/ui/qr_bottom_sheet.ui:13
+msgid "Contents"
+msgstr "Περιεχόμενα"
+
+#: data/resources/ui/qr_bottom_sheet.ui:22
+msgid "Copy to Clipboard"
+msgstr "Αντιγραφή στο πρόχειρο"
+
+#: data/resources/ui/qr_bottom_sheet.ui:34
+msgid "Open Link"
+msgstr "Άνοιγμα συνδεσμού"
+
+#: data/resources/ui/shortcuts.ui:6
+msgctxt "shortcut window"
+msgid "General"
+msgstr "Γενικά"
+
+#: data/resources/ui/shortcuts.ui:9
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "Εμφάνιση συντομεύσεων"
+
+#: data/resources/ui/shortcuts.ui:15
+msgctxt "shortcut window"
+msgid "Main Menu"
+msgstr "Κυρίως μενού"
+
+#: data/resources/ui/shortcuts.ui:21
+msgctxt "Shortcut window description"
+msgid "Open Preferences"
+msgstr "Άνοιγμα προτιμήσεων"
+
+#: data/resources/ui/shortcuts.ui:27
+msgctxt "shortcut window"
+msgid "Close Window"
+msgstr "Κλείσιμο παραθύρου"
+
+#: data/resources/ui/shortcuts.ui:33
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "Έξοδος"
+
+#: data/resources/ui/shortcuts.ui:41
+msgctxt "shortcut window"
+msgid "Camera"
+msgstr "Κάμερα"
+
+#: data/resources/ui/shortcuts.ui:44
+msgctxt "shortcut window"
+msgid "Picture Mode"
+msgstr "Λειτουργία εικόνας"
+
+#: data/resources/ui/shortcuts.ui:50
+msgctxt "shortcut window"
+msgid "Recording Mode"
+msgstr "Λειτουργία εγγραφής"
+
+#: data/resources/ui/shortcuts.ui:56
+msgctxt "shortcut window"
+msgid "Take Picture or Start Recording"
+msgstr "Λήψη εικόνας ή έναρξη εγγραφής"
+
+#: data/resources/ui/shortcuts.ui:62
+msgctxt "shortcut window"
+msgid "Show/Hide Composition Guidelines"
+msgstr "Εμφάνιση/Απόκρυψη οδηγιών σύνθεσης"
+
+#: data/resources/ui/shortcuts.ui:70
+msgctxt "shortcut window"
+msgid "Gallery"
+msgstr "Συλλογή"
+
+#: data/resources/ui/shortcuts.ui:73
+msgctxt "shortcut window"
+msgid "Open/Close Gallery"
+msgstr "Άνοιγμα/Κλείσιμο συλλογής"
+
+#: data/resources/ui/shortcuts.ui:79
+msgctxt "shortcut window"
+msgid "Next"
+msgstr "Επόμενο"
+
+#: data/resources/ui/shortcuts.ui:85
+msgctxt "shortcut window"
+msgid "Previous"
+msgstr "Προηγούμενο"
+
+#: data/resources/ui/window.ui:21
+msgid "Gallery"
+msgstr "Συλλογή"
+
+#: src/application.rs:34
+msgid "Enable debug messages"
+msgstr "Ενεργοποίηση μηνυμάτων αποσφαλμάτωσης"
+
+#. TRANSLATORS This is the image format presented in the preferences
+#. window.
+#: src/enums.rs:27
+msgid "JPEG"
+msgstr "JPEG"
+
+#. TRANSLATORS Do NOT translate {date}. This will appear as, e.g. "Photo
+#. from 2023-05-21 11-05-59.12345" and it will be used as a file name.
+#: src/utils.rs:23
+msgid "Photo from {date}"
+msgstr "Φωτογραφία από {date}"
+
+#. TRANSLATORS Do NOT translate {number}. This will appear as, e.g.
+#. "Photo 12345" and it will be used as a file name.
+#: src/utils.rs:28
+msgid "Photo {number}"
+msgstr "Φωτογραφία {number}"
+
+#. TRANSLATORS Do NOT translate {date}. This will appear as, e.g.
+#. "Recording from 2023-05-21 11-05-59.12345" and it will be used as a
+#. file name.
+#: src/utils.rs:41
+msgid "Recording from {date}"
+msgstr "Εγγραφή από {date}"
+
+#. TRANSLATORS Do NOT translate {number}. This will appear as, e.g.
+#. "Recording 12345" and it will be used as a file name.
+#: src/utils.rs:46
+msgid "Recording {number}"
+msgstr "Εγγραφή {number}"
+
+#: src/utils.rs:136
+msgid "_Copy Picture"
+msgstr "_Αντιγραφή φωτογραφίας"
+
+#: src/utils.rs:138
+msgid "_Copy Video"
+msgstr "_Αντιγραφή βίντεο"
+
+#: src/utils.rs:140
+msgid "_Delete"
+msgstr "_Διαγραφή"
+
+#: src/widgets/camera.rs:607
+msgid "Could not play camera stream"
+msgstr "Δεν ήταν δυνατή η αναπαραγωγή της ροής της κάμερας"
+
+#: src/widgets/gallery.rs:141
+msgid "Open in Video Player"
+msgstr "Άνοιγμα σε πρόγραμμα αναπαραγωγής βίντεο"
+
+#: src/widgets/gallery.rs:420 src/widgets/qr_bottom_sheet.rs:104
+msgid "Copied to clipboard"
+msgstr "Αντιγράφηκε στο πρόχειρο"
+
+#: src/widgets/gallery.rs:461
+msgid "Picture deleted"
+msgstr "Η εικόνα διαγράφηκε"
+
+#: src/widgets/gallery.rs:463
+msgid "Video deleted"
+msgstr "Το βίντεο διαγράφηκε"
+
+#: src/widgets/qr_screen_bin.rs:50
+msgid "Scan Code"
+msgstr "Σάρωση κώδικα"
+
+#: src/widgets/shutter_button.rs:82
+msgid "Start Recording"
+msgstr "Έναρξη εγγραφής"
+
+#: src/widgets/shutter_button.rs:93
+msgid "Stop Recording"
+msgstr "Διακοπή εγγραφής"
+
+#: src/widgets/window.rs:107 src/widgets/window.rs:363
+msgid "Could not take picture"
+msgstr "Δεν ήταν δυνατή η λήψη φωτογραφίας"
+
+#: src/widgets/window.rs:111 src/widgets/window.rs:367
+msgid "Could not record video"
+msgstr "Δεν ήταν δυνατή η εγγραφή βίντεο"
+
+#: src/widgets/window.rs:314
+msgid "translator-credits"
+msgstr ""
+"Ελληνική μεταφραστική ομάδα GNOME\n"
+" Ευστάθιος Ιωσηφίδης <iosifidis@opensuse.org>\n"
+"\n"
+"Για περισσότερες πληροφορίες, επισκεφθείτε τη σελίδα\n"
+"http://gnome.gr/"
+
+#~ msgid "Video format"
+#~ msgstr "Μορφή βίντεο"
+
+#~ msgid "Whether to save videos as mp4 or webm"
+#~ msgstr "Εάν θα αποθηκεύονται τα βίντεο ως mp4 ή webm"
+
+#~ msgid "Snapshot"
+#~ msgstr "Στιγμιότυπο"
+
+#~ msgid "_About Snapshot"
+#~ msgstr "_Περί Στιγμιότυπο"
+
+#~ msgid "Maximiliano Sandoval"
+#~ msgstr "Maximiliano Sandoval"
+
+#~ msgid "Back"
+#~ msgstr "Πίσω"

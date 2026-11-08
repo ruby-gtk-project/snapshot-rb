@@ -258,3 +258,53 @@ Everything else in this file — §1 (closed), §2 (shutter sound, still open),
 §3 (live camera/aperture, still open), the `gallery_button.rb` animation
 discrepancy (still unresolved) — re-checked against the current tree and
 unchanged.
+
+## Round 4 addendum (this round)
+
+### `gallery_button.rb` animation count — settled
+
+Read `src/widgets/gallery_button.rs` closely rather than by regex this
+round. It declares exactly **two** `adw::TimedAnimation` fields:
+`size_ani` (the 250ms grow-in, in `constructed()`) and `hover_ani` (the
+125ms hover scale, also in `constructed()`). There are five more
+*call sites* that invoke `.play()`/`.pause()`/`.value()` on one of those
+same two objects (`widget.animation().play()` three times,
+`hover_ani.play()`/`.pause()` in `state_flags_changed`), which is almost
+certainly what a call-site-counting scan read as "6 animations" — it is 2
+constructions and roughly 6 uses of them, the exact "occurrences vs.
+messages" distinction `translation-parity.md`'s own skill draws for msgids
+and which applies here too. **The real count is 2 vs. the port's 1**: the
+port has the fade-in (`fade_animation`) and is missing the hover-scale
+animation. Both of upstream's animations drive the same custom
+`snapshot()` override (translate+scale the whole button, or redraw the
+clipped texture), which the Ruby bindings cannot override (ruby-gtk skill's
+quirks reference) — exactly the limitation `gallery_button.rb`'s own header
+comment already names for the fade. Adding a `hover_animation` object with
+nothing to drive it would be the unreachable-stub shape this round's task
+explicitly ranks worse than not adding it, so it stays out, but the
+open question is now closed: it is a real, named 1-of-2 gap, not an
+unresolved regex artifact.
+
+### Drive-script coverage for `flash_bin.rb`, `qr_bottom_sheet.rb`, `camera_row.rb`, `video_player.rb` — closed
+
+All four now have scenarios in `test/drive_snapshot.rb` that instantiate
+the real, already-built widget off the running app (not a fresh throwaway
+instance) and assert on behaviour, not just construction:
+
+- **`FlashBin`**: `camera.send(:flash_bin).flash` starts the animation
+  (`flashing?` flips true), and asserts it finishes on its own.
+- **`QrBottomSheet`**: setting `contents=` to plain text vs. an `https://`
+  URL toggles `open_external_button.visible?` and `url?` correctly, and
+  activating the real `qr-bottom-sheet.copy` GAction (not calling the Ruby
+  method) stubs the widget's own clipboard and asserts the toast fires.
+- **`CameraRow`**: the `REGISTRY`-based box↔row lookup (`.for`/`.register`/
+  `.unregister`), `item=` filling the label, and `selected=` toggling the
+  checkmark.
+- **`VideoPlayer`**: reached through `GalleryVideo#load_content` (the path
+  that already existed), now with explicit assertions that it built a real
+  `VideoPlayer`, that `#stream` is a real `Gtk::MediaFile`, and that
+  `#pause` on an unrealized, unparented player does not raise.
+
+Runtime gate: **130/130**, up from 108, and all four of the components
+`test-parity.md`'s round-3 finding named as having zero suite mentions now
+have at least one.

@@ -3,6 +3,7 @@
 require 'adwaita'
 
 require_relative 'enums'
+require_relative 'i18n'
 
 # ShutterButton is the big round button in the middle of the control row, a
 # port of src/widgets/shutter_button.rs.
@@ -26,6 +27,9 @@ require_relative 'enums'
 # geometry, the colours, and the three tooltips — is upstream's.
 #
 class ShutterButton
+  include Snapshot::I18n
+  Snapshot::I18n.bind(self)
+
   # Magic factor from upstream: inscribe a circle in a square of width w, then
   # a square in that circle; LAMBDA·w is the distance between the two squares,
   # which is the translation the record animation needs. (sqrt(2) - 1) / 2.
@@ -46,9 +50,9 @@ class ShutterButton
 
   # The tooltip for each shutter mode, upstream's set_shutter_mode.
   TOOLTIPS = {
-    Enums::ShutterMode::PICTURE   => 'Take Picture',
-    Enums::ShutterMode::VIDEO     => 'Start Recording',
-    Enums::ShutterMode::RECORDING => 'Stop Recording',
+    Enums::ShutterMode::PICTURE   => N_('Take Picture'),
+    Enums::ShutterMode::VIDEO     => N_('Start Recording'),
+    Enums::ShutterMode::RECORDING => N_('Stop Recording'),
   }.freeze
 
   # Where the mode and record animations end up for each mode: the mode
@@ -93,7 +97,7 @@ class ShutterButton
         @shutter_mode = mode
         retarget(mode_animation, MODE_TARGETS.fetch(mode).first)
         retarget(record_animation, MODE_TARGETS.fetch(mode).last)
-        button.tooltip_text = TOOLTIPS.fetch(mode)
+        button.tooltip_text = _(TOOLTIPS.fetch(mode))
       end
     end
   end
@@ -118,7 +122,7 @@ class ShutterButton
     @button ||= Gtk::Button.new.tap do |widget|
       widget.add_css_class('shutterbutton')
       widget.add_css_class('flat')
-      widget.tooltip_text = TOOLTIPS.fetch(Enums::ShutterMode.default)
+      widget.tooltip_text = _(TOOLTIPS.fetch(Enums::ShutterMode.default))
     end
   end
 

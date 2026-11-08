@@ -8,6 +8,8 @@ require_relative 'guidelines_bin'
 require_relative 'qr_screen_bin'
 require_relative 'qr_bottom_sheet'
 require_relative 'camera_controls'
+require_relative 'aperture_utils'
+require_relative 'i18n'
 
 # Camera is the camera page's own widget, a port of src/widgets/camera.rs and
 # data/resources/ui/camera.ui: the viewfinder area wrapped in the flash,
@@ -24,7 +26,16 @@ require_relative 'camera_controls'
 # "No Camera Found" status page Application showed before this file existed
 # — now owned by Camera, alongside the controls that upstream always shows
 # regardless of viewfinder state.
+#
+# The one slice of aperture that is pure caps arithmetic rather than a device
+# pipeline — src/utils.rs's caps-filtering helpers — is ported in
+# ApertureUtils (see aperture_utils.rb) and required here so it loads on the
+# same path as the rest of the camera page; it has its own unit tests and is
+# left uncalled by this file because there is no live viewfinder to feed it
+# real GstCaps yet.
 class Camera
+  include Snapshot::I18n
+
   def initialize(settings:, on_toast: nil)
     @settings = settings
     @on_toast = on_toast
@@ -105,12 +116,12 @@ class Camera
   # path does; the toast text matches what upstream's window.rs sends for
   # each capture mode.
   def take_picture(_format)
-    @on_toast&.call('Could not take picture')
+    @on_toast&.call(_('Could not take picture'))
     false
   end
 
   def start_recording
-    @on_toast&.call('Could not record video')
+    @on_toast&.call(_('Could not record video'))
     false
   end
 
@@ -165,8 +176,8 @@ class Camera
 
     def status_page
       @status_page ||= Adwaita::StatusPage.new.tap do |page|
-        page.title = 'No Camera Found'
-        page.description = 'Connect a camera to take pictures and videos'
+        page.title = _('No Camera Found')
+        page.description = _('Connect a camera device')
         page.icon_name = 'camera-photo-symbolic'
       end
     end

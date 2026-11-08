@@ -2,6 +2,8 @@
 
 require 'adwaita'
 
+require_relative 'i18n'
+
 # QrScreenBin dims the viewfinder and cuts a rounded square out of the dimming
 # to aim a code at, a port of src/widgets/qr_screen_bin.rs.
 #
@@ -23,12 +25,15 @@ require 'adwaita'
 # from, as upstream's property of the same name is.
 #
 class QrScreenBin
+  include Snapshot::I18n
+  Snapshot::I18n.bind(self)
+
   BORDER_RADIUS = 32.0
   BORDER_WIDTH = 4.0
   BG_OPACITY = 0.5
   ANIMATION_DURATION = 500
 
-  LABEL = 'Scan Code'
+  LABEL = N_('Scan Code')
   LABEL_SIZE = 16
   LABEL_MARGIN = 12.0
 
@@ -170,7 +175,7 @@ class QrScreenBin
     # one, shown through Cairo.
     def draw_text(context, width, bottom)
       label_layout.then do |layout|
-        layout.text = LABEL
+        layout.text = _(LABEL)
         context.set_source_rgb(1.0, 1.0, 1.0)
         context.move_to((width - layout.pixel_size.first) / 2.0, bottom + LABEL_MARGIN)
         context.show_pango_layout(layout)
