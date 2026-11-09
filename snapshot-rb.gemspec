@@ -96,29 +96,13 @@ Gem::Specification.new do |spec|
   spec.executables = ["snapshot"]
   spec.require_paths = ["lib"]
 
-  # Runtime: the toolkit itself, plus the GI-typelib loaders this port binds
-  # against instead of hand-rolling what they provide (image loading, the
-  # gst-plugins-base version line in the troubleshooting dump). See
-  # nix/Gemfile for the gems actually resolved into the packaged app's
-  # closure; this list is what `gem install` needs.
-  #
-  # gstreamer_play (GstPlay/GstBadAudio) was removed from here: upstream never
-  # depends on the gstreamer-play Rust crate or either namespace — video
-  # playback goes through gtk::MediaFile, exposed via the gtk4 gem itself, not
-  # a separate GStreamer binding — so there was nothing in this app for it to
-  # call.
-  spec.add_dependency("gtk4", "~> 4.3")
   spec.add_dependency("adwaita", "~> 4.3")
+  spec.add_dependency("gettext", "~> 3.4")
   spec.add_dependency("glib2", "~> 4.3")
   spec.add_dependency("glycin", "~> 1.0")
-  spec.add_dependency("libglycin-gtk4", "~> 1.0")
   spec.add_dependency("gstreamer_pbutils", "~> 1.1")
-
-  # Translation. Upstream's po/ domain is "snapshot" (meson.project_name());
-  # this gem is what loads its .mo files and provides the _()/n_() markers
-  # the strings in lib/ are wrapped in. See po/ and
-  # .reports/translation-parity.md.
-  spec.add_dependency("gettext", "~> 3.4")
+  spec.add_dependency("gtk4", "~> 4.3")
+  spec.add_dependency("libglycin-gtk4", "~> 1.0")
 
   # NOTE: It is preferable to list development dependencies in the gemspec due to increased
   #       visibility and discoverability.

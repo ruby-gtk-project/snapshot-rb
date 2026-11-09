@@ -87,6 +87,8 @@ task "gettext:mo" do
 end
 # kettle-jem:unfreeze
 
+# kettle-jem:unfreeze
+
 # Define a base default task early so other files can enhance it.
 desc "Default tasks aggregator"
 task :default do
